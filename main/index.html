@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中国象棋 - 单机版</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="audio-manager.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>中国象棋</h1>
+            <div class="game-controls">
+                <button id="newGame">新游戏</button>
+                <button id="undo">悔棋</button>
+                <button id="showGameRecords">全局棋谱</button>
+                <button id="audioToggle" class="audio-btn">🔊 音效</button>
+            </div>
+            
+            <!-- 音量控制面板 -->
+            <div id="audioControls" class="audio-controls">
+                <div class="volume-control">
+                    <label for="musicVolume">🎵 背景音乐:</label>
+                    <input type="range" id="musicVolume" min="0" max="100" value="30" class="volume-slider">
+                    <span id="musicVolumeValue">30%</span>
+                </div>
+                <div class="volume-control">
+                    <label for="effectVolume">🔊 音效:</label>
+                    <input type="range" id="effectVolume" min="0" max="100" value="60" class="volume-slider">
+                    <span id="effectVolumeValue">60%</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="game-board">
+            <div class="board">
+                <!-- 棋盘格子将由JavaScript动态生成 -->
+            </div>
+            <div class="status">
+                <div id="currentPlayer">当前回合: 红方</div>
+                <div id="gameStatus">游戏状态: 进行中</div>
+            </div>
+        </div>
+
+        <div class="captured-pieces">
+            <div class="red-captured">被吃红子: </div>
+            <div class="black-captured">被吃黑子: </div>
+        </div>
+    </div>
+
+    <!-- 棋谱展示面板 -->
+    <div id="recordPanel" class="record-panel hidden">
+        <div class="record-header">
+            <h2>经典棋谱选择</h2>
+            <button id="closeRecords" class="close-btn">×</button>
+        </div>
+        
+        <!-- 棋谱选择按钮区域 -->
+        <div class="record-selection">
+            <h3>选择棋谱：</h3>
+            <div id="recordButtons" class="record-buttons">
+                <!-- 经典残局 -->
+                <div class="record-category">
+                    <h4>经典残局</h4>
+                    <button class="record-btn" data-game="七星聚会">七星聚会</button>
+                    <button class="record-btn" data-game="蚯蚓降龙">蚯蚓降龙</button>
+                    <button class="record-btn" data-game="野马操田">野马操田</button>
+                    <button class="record-btn" data-game="千里独行">千里独行</button>
+                </div>
+
+                <!-- 经典开局 -->
+                <div class="record-category">
+                    <h4>经典开局</h4>
+                    <button class="record-btn" data-game="中炮对屏风马经典">中炮对屏风马</button>
+                    <button class="record-btn" data-game="中炮对顺炮对攻">中炮对顺炮</button>
+                    <button class="record-btn" data-game="仙人指路对中炮">仙人指路</button>
+                    <button class="record-btn" data-game="胡荣华名局精选">胡荣华名局</button>
+                    <button class="record-btn" data-game="许银川名局精选">许银川名局</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 棋谱步骤展示区域 -->
+        <div id="recordDisplay" class="record-display hidden">
+            <div class="record-info">
+                <h3 id="recordTitle">棋谱名称</h3>
+                <div class="play-controls">
+                    <button id="playBtn">▶ 播放</button>
+                    <button id="pauseBtn">⏸ 暂停</button>
+                    <button id="resetBtn">↻ 重置</button>
+                    <div class="speed-control">
+                        <label>速度：</label>
+                        <select id="playSpeed">
+                            <option value="2000">慢速</option>
+                            <option value="1000" selected>正常</option>
+                            <option value="500">快速</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="record-steps">
+                <ol id="stepsList" class="steps-list">
+                    <!-- 棋谱步骤将由JavaScript生成 -->
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script src="chess.js"></script>
+    <script>
+        // 游戏初始化和交互功能
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('中国象棋页面加载完成');
+
+            setTimeout(() => {
+                if (window.game) {
+                    console.log('✅ 游戏初始化成功');
+                    console.log('棋子数量:', window.game.pieces.length);
+                } else {
+                    console.log('❌ 游戏初始化失败');
+                }
+            }, 500);
+
+            // 关闭棋谱面板按钮
+            const closeRecordsBtn = document.getElementById('closeRecords');
+            if (closeRecordsBtn) {
+                closeRecordsBtn.addEventListener('click', function() {
+                    const recordPanel = document.getElementById('recordPanel');
+                    if (recordPanel) {
+                        recordPanel.classList.add('hidden');
+                        console.log('棋谱面板已关闭');
+                    }
+                });
+            }
+
+            // 棋谱选择按钮
+            const recordButtons = document.querySelectorAll('.record-btn');
+            console.log('找到棋谱按钮:', recordButtons.length);
+
+            recordButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const gameName = this.getAttribute('data-game');
+                    console.log('选择棋谱:', gameName);
+
+                    if (window.game && window.game.setupFamousGame) {
+                        // 隐藏棋谱选择界面
+                        document.querySelector('.record-selection').classList.add('hidden');
+
+                        // 显示棋谱步骤界面
+                        document.getElementById('recordDisplay').classList.remove('hidden');
+
+                        // 设置标题
+                        document.getElementById('recordTitle').textContent = gameName;
+
+                        // 加载棋局
+                        window.game.setupFamousGame(gameName);
+                        console.log('棋谱加载完成:', gameName);
+                    } else {
+                        console.log('❌ 游戏对象或方法不可用');
+                        alert('游戏尚未初始化完成，请稍后再试');
+                    }
+                });
+            });
+
+            // 重置按钮
+            const resetBtn = document.getElementById('resetBtn');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function() {
+                    console.log('重置棋谱演示');
+                    // 显示棋谱选择界面
+                    document.querySelector('.record-selection').classList.remove('hidden');
+
+                    // 隐藏棋谱步骤界面
+                    document.getElementById('recordDisplay').classList.add('hidden');
+
+                    // 重置游戏
+                    if (window.game && window.game.resetGame) {
+                        window.game.resetGame();
+                    }
+                });
+            }
+
+            // 播放按钮
+            const playBtn = document.getElementById('playBtn');
+            if (playBtn) {
+                playBtn.addEventListener('click', function() {
+                    console.log('开始自动演示');
+                    if (window.game) {
+                        if (window.game.autoPlayFullGame) {
+                            window.game.autoPlayFullGame();
+                        } else {
+                            console.log('❌ autoPlayFullGame方法不存在');
+                            alert('自动演示功能暂时不可用');
+                        }
+                    } else {
+                        console.log('❌ 游戏对象不存在');
+                        alert('游戏尚未初始化');
+                    }
+                });
+            }
+
+            // 全局棋谱按钮
+            const showGameRecordsBtn = document.getElementById('showGameRecords');
+            if (showGameRecordsBtn) {
+                showGameRecordsBtn.addEventListener('click', function() {
+                    console.log('显示棋谱面板');
+                    if (window.game && window.game.showRecordPanel) {
+                        window.game.showRecordPanel();
+                    } else {
+                        const recordPanel = document.getElementById('recordPanel');
+                        if (recordPanel) {
+                            recordPanel.classList.remove('hidden');
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1297 @@
+{
+  "id": "4d825674-6feb-4692-b2eb-cf20cf871207",
+  "title": "张子洪 先负 邓英楠",
+  "url": "https://www.xqipu.com/qipu/4d825674-6feb-4692-b2eb-cf20cf871207",
+  "redPlayer": "张子洪",
+  "blackPlayer": "邓英楠",
+  "result": "先负",
+  "winner": "邓英楠",
+  "moves": [
+    {
+      "step": 1,
+      "move": "炮八平五",
+      "player": "red",
+      "fullText": "炮八平五"
+    },
+    {
+      "step": 2,
+      "move": "马2进3",
+      "player": "black",
+      "fullText": "马2进3"
+    },
+    {
+      "step": 3,
+      "move": "马八进七",
+      "player": "red",
+      "fullText": "马八进七"
+    },
+    {
+      "step": 4,
+      "move": "卒3进1",
+      "player": "black",
+      "fullText": "卒3进1"
+    },
+    {
+      "step": 5,
+      "move": "车九平八",
+      "player": "red",
+      "fullText": "车九平八"
+    },
+    {
+      "step": 6,
+      "move": "车1平2",
+      "player": "black",
+      "fullText": "车1平2"
+    },
+    {
+      "step": 7,
+      "move": "车八进六",
+      "player": "red",
+      "fullText": "车八进六"
+    },
+    {
+      "step": 8,
+      "move": "马8进7",
+      "player": "black",
+      "fullText": "马8进7"
+    },
+    {
+      "step": 9,
+      "move": "兵五进一",
+      "player": "red",
+      "fullText": "兵五进一"
+    },
+    {
+      "step": 10,
+      "move": "卒7进1",
+      "player": "black",
+      "fullText": "卒7进1"
+    },
+    {
+      "step": 11,
+      "move": "兵五进一",
+      "player": "red",
+      "fullText": "兵五进一"
+    },
+    {
+      "step": 12,
+      "move": "士6进5",
+      "player": "black",
+      "fullText": "士6进5"
+    },
+    {
+      "step": 13,
+      "move": "马七进五",
+      "player": "red",
+      "fullText": "马七进五"
+    },
+    {
+      "step": 14,
+      "move": "炮8进1",
+      "player": "black",
+      "fullText": "炮8进1"
+    },
+    {
+      "step": 15,
+      "move": "车八退二",
+      "player": "red",
+      "fullText": "车八退二"
+    },
+    {
+      "step": 16,
+      "move": "卒5进1",
+      "player": "black",
+      "fullText": "卒5进1"
+    },
+    {
+      "step": 17,
+      "move": "兵三进一",
+      "player": "red",
+      "fullText": "兵三进一"
+    },
+    {
+      "step": 18,
+      "move": "炮8平5",
+      "player": "black",
+      "fullText": "炮8平5"
+    },
+    {
+      "step": 19,
+      "move": "马二进三",
+      "player": "red",
+      "fullText": "马二进三"
+    },
+    {
+      "step": 20,
+      "move": "车9平8",
+      "player": "black",
+      "fullText": "车9平8"
+    },
+    {
+      "step": 21,
+      "move": "车一平二",
+      "player": "red",
+      "fullText": "车一平二"
+    },
+    {
+      "step": 22,
+      "move": "车8进6",
+      "player": "black",
+      "fullText": "车8进6"
+    },
+    {
+      "step": 23,
+      "move": "兵三进一",
+      "player": "red",
+      "fullText": "兵三进一"
+    },
+    {
+      "step": 24,
+      "move": "炮5进3",
+      "player": "black",
+      "fullText": "炮5进3"
+    },
+    {
+      "step": 25,
+      "move": "马三进五",
+      "player": "red",
+      "fullText": "马三进五"
+    },
+    {
+      "step": 26,
+      "move": "车8平5",
+      "player": "black",
+      "fullText": "车8平5"
+    },
+    {
+      "step": 27,
+      "move": "兵三进一",
+      "player": "red",
+      "fullText": "兵三进一"
+    },
+    {
+      "step": 28,
+      "move": "马7退6",
+      "player": "black",
+      "fullText": "马7退6"
+    },
+    {
+      "step": 29,
+      "move": "炮二进七",
+      "player": "red",
+      "fullText": "炮二进七"
+    },
+    {
+      "step": 30,
+      "move": "炮2平1",
+      "player": "black",
+      "fullText": "炮2平1"
+    },
+    {
+      "step": 31,
+      "move": "车八平四",
+      "player": "red",
+      "fullText": "车八平四"
+    },
+    {
+      "step": 32,
+      "move": "车2进3",
+      "player": "black",
+      "fullText": "车2进3"
+    },
+    {
+      "step": 33,
+      "move": "车二进六",
+      "player": "red",
+      "fullText": "车二进六"
+    },
+    {
+      "step": 34,
+      "move": "卒5进1",
+      "player": "black",
+      "fullText": "卒5进1"
+    },
+    {
+      "step": 35,
+      "move": "车四进一",
+      "player": "red",
+      "fullText": "车四进一"
+    },
+    {
+      "step": 36,
+      "move": "车5平7",
+      "player": "black",
+      "fullText": "车5平7"
+    },
+    {
+      "step": 37,
+      "move": "炮五平四",
+      "player": "red",
+      "fullText": "炮五平四"
+    },
+    {
+      "step": 38,
+      "move": "车2平7",
+      "player": "black",
+      "fullText": "车2平7"
+    },
+    {
+      "step": 39,
+      "move": "车二退二",
+      "player": "red",
+      "fullText": "车二退二"
+    },
+    {
+      "step": 40,
+      "move": "车7进1",
+      "player": "black",
+      "fullText": "车7进1"
+    },
+    {
+      "step": 41,
+      "move": "车四进三",
+      "player": "red",
+      "fullText": "车四进三"
+    },
+    {
+      "step": 42,
+      "move": "炮1退1",
+      "player": "black",
+      "fullText": "炮1退1"
+    },
+    {
+      "step": 43,
+      "move": "车四退二",
+      "player": "red",
+      "fullText": "车四退二"
+    },
+    {
+      "step": 44,
+      "move": "马3进4",
+      "player": "black",
+      "fullText": "马3进4"
+    },
+    {
+      "step": 45,
+      "move": "车四平六",
+      "player": "red",
+      "fullText": "车四平六"
+    },
+    {
+      "step": 46,
+      "move": "马4进3",
+      "player": "black",
+      "fullText": "马4进3"
+    },
+    {
+      "step": 47,
+      "move": "炮四平八",
+      "player": "red",
+      "fullText": "炮四平八"
+    },
+    {
+      "step": 48,
+      "move": "车7平4",
+      "player": "black",
+      "fullText": "车7平4"
+    },
+    {
+      "step": 49,
+      "move": "炮八进七",
+      "player": "red",
+      "fullText": "炮八进七"
+    },
+    {
+      "step": 50,
+      "move": "车六退一",
+      "player": "black",
+      "fullText": "车六退一"
+    },
+    {
+      "step": 51,
+      "move": "马3退4",
+      "player": "red",
+      "fullText": "马3退4"
+    },
+    {
+      "step": 52,
+      "move": "车二平五",
+      "player": "black",
+      "fullText": "车二平五"
+    },
+    {
+      "step": 53,
+      "move": "马4退3",
+      "player": "red",
+      "fullText": "马4退3"
+    },
+    {
+      "step": 54,
+      "move": "炮八平九",
+      "player": "black",
+      "fullText": "炮八平九"
+    },
+    {
+      "step": 55,
+      "move": "炮1进5",
+      "player": "red",
+      "fullText": "炮1进5"
+    },
+    {
+      "step": 56,
+      "move": "炮九退六",
+      "player": "black",
+      "fullText": "炮九退六"
+    },
+    {
+      "step": 57,
+      "move": "车7平1",
+      "player": "red",
+      "fullText": "车7平1"
+    },
+    {
+      "step": 58,
+      "move": "车五平一",
+      "player": "black",
+      "fullText": "车五平一"
+    },
+    {
+      "step": 59,
+      "move": "车1平8",
+      "player": "red",
+      "fullText": "车1平8"
+    },
+    {
+      "step": 60,
+      "move": "炮二平四",
+      "player": "black",
+      "fullText": "炮二平四"
+    },
+    {
+      "step": 61,
+      "move": "将5平6",
+      "player": "red",
+      "fullText": "将5平6"
+    },
+    {
+      "step": 62,
+      "move": "车一进二",
+      "player": "black",
+      "fullText": "车一进二"
+    },
+    {
+      "step": 63,
+      "move": "车8退4",
+      "player": "red",
+      "fullText": "车8退4"
+    },
+    {
+      "step": 64,
+      "move": "车一平七",
+      "player": "black",
+      "fullText": "车一平七"
+    },
+    {
+      "step": 65,
+      "move": "相七进五",
+      "player": "red",
+      "fullText": "相七进五"
+    },
+    {
+      "step": 66,
+      "move": "卒1进1",
+      "player": "black",
+      "fullText": "卒1进1"
+    },
+    {
+      "step": 67,
+      "move": "兵一进一",
+      "player": "red",
+      "fullText": "兵一进一"
+    },
+    {
+      "step": 68,
+      "move": "车8平5",
+      "player": "black",
+      "fullText": "车8平5"
+    },
+    {
+      "step": 69,
+      "move": "卒1进1",
+      "player": "red",
+      "fullText": "卒1进1"
+    },
+    {
+      "step": 70,
+      "move": "车七平三",
+      "player": "black",
+      "fullText": "车七平三"
+    },
+    {
+      "step": 71,
+      "move": "车三平二",
+      "player": "red",
+      "fullText": "车三平二"
+    },
+    {
+      "step": 72,
+      "move": "将6平5",
+      "player": "black",
+      "fullText": "将6平5"
+    },
+    {
+      "step": 73,
+      "move": "车二退二",
+      "player": "red",
+      "fullText": "车二退二"
+    },
+    {
+      "step": 74,
+      "move": "卒1进1",
+      "player": "black",
+      "fullText": "卒1进1"
+    },
+    {
+      "step": 75,
+      "move": "车二退一",
+      "player": "red",
+      "fullText": "车二退一"
+    },
+    {
+      "step": 76,
+      "move": "马3进2",
+      "player": "black",
+      "fullText": "马3进2"
+    },
+    {
+      "step": 77,
+      "move": "车5进2",
+      "player": "red",
+      "fullText": "车5进2"
+    },
+    {
+      "step": 78,
+      "move": "帅五平四",
+      "player": "black",
+      "fullText": "帅五平四"
+    },
+    {
+      "step": 79,
+      "move": "车二平三",
+      "player": "red",
+      "fullText": "车二平三"
+    },
+    {
+      "step": 80,
+      "move": "帅四平五",
+      "player": "black",
+      "fullText": "帅四平五"
+    },
+    {
+      "step": 81,
+      "move": "卒1进1",
+      "player": "red",
+      "fullText": "卒1进1"
+    },
+    {
+      "step": 82,
+      "move": "相五退七",
+      "player": "black",
+      "fullText": "相五退七"
+    },
+    {
+      "step": 83,
+      "move": "卒1进1",
+      "player": "red",
+      "fullText": "卒1进1"
+    },
+    {
+      "step": 84,
+      "move": "相七进五",
+      "player": "black",
+      "fullText": "相七进五"
+    },
+    {
+      "step": 85,
+      "move": "马2退3",
+      "player": "red",
+      "fullText": "马2退3"
+    },
+    {
+      "step": 86,
+      "move": "车三平六",
+      "player": "black",
+      "fullText": "车三平六"
+    },
+    {
+      "step": 87,
+      "move": "车5进1",
+      "player": "red",
+      "fullText": "车5进1"
+    },
+    {
+      "step": 88,
+      "move": "车六退二",
+      "player": "black",
+      "fullText": "车六退二"
+    },
+    {
+      "step": 89,
+      "move": "车5平1",
+      "player": "red",
+      "fullText": "车5平1"
+    },
+    {
+      "step": 90,
+      "move": "兵一进一",
+      "player": "black",
+      "fullText": "兵一进一"
+    },
+    {
+      "step": 91,
+      "move": "马3进5",
+      "player": "red",
+      "fullText": "马3进5"
+    },
+    {
+      "step": 92,
+      "move": "马5进6",
+      "player": "black",
+      "fullText": "马5进6"
+    },
+    {
+      "step": 93,
+      "move": "兵一进一",
+      "player": "red",
+      "fullText": "兵一进一"
+    },
+    {
+      "step": 94,
+      "move": "车1进1",
+      "player": "black",
+      "fullText": "车1进1"
+    },
+    {
+      "step": 95,
+      "move": "兵一平二",
+      "player": "red",
+      "fullText": "兵一平二"
+    },
+    {
+      "step": 96,
+      "move": "马6进4",
+      "player": "black",
+      "fullText": "马6进4"
+    },
+    {
+      "step": 97,
+      "move": "兵二平三",
+      "player": "red",
+      "fullText": "兵二平三"
+    },
+    {
+      "step": 98,
+      "move": "卒3进1",
+      "player": "black",
+      "fullText": "卒3进1"
+    },
+    {
+      "step": 99,
+      "move": "兵三进一",
+      "player": "red",
+      "fullText": "兵三进一"
+    },
+    {
+      "step": 100,
+      "move": "卒3进1",
+      "player": "black",
+      "fullText": "卒3进1"
+    },
+    {
+      "step": 101,
+      "move": "兵三进一",
+      "player": "red",
+      "fullText": "兵三进一"
+    },
+    {
+      "step": 102,
+      "move": "士5退6",
+      "player": "black",
+      "fullText": "士5退6"
+    },
+    {
+      "step": 103,
+      "move": "兵三平四",
+      "player": "red",
+      "fullText": "兵三平四"
+    },
+    {
+      "step": 104,
+      "move": "士4进5",
+      "player": "black",
+      "fullText": "士4进5"
+    },
+    {
+      "step": 105,
+      "move": "卒3进1",
+      "player": "red",
+      "fullText": "卒3进1"
+    },
+    {
+      "step": 106,
+      "move": "马4进3",
+      "player": "black",
+      "fullText": "马4进3"
+    },
+    {
+      "step": 107,
+      "move": "卒1平2",
+      "player": "red",
+      "fullText": "卒1平2"
+    },
+    {
+      "step": 108,
+      "move": "炮八平五",
+      "player": "black",
+      "fullText": "炮八平五"
+    },
+    {
+      "step": 109,
+      "move": "马2进3",
+      "player": "red",
+      "fullText": "马2进3"
+    },
+    {
+      "step": 110,
+      "move": "马八进七",
+      "player": "black",
+      "fullText": "马八进七"
+    },
+    {
+      "step": 111,
+      "move": "卒3进1",
+      "player": "red",
+      "fullText": "卒3进1"
+    },
+    {
+      "step": 112,
+      "move": "车九平八",
+      "player": "black",
+      "fullText": "车九平八"
+    },
+    {
+      "step": 113,
+      "move": "车1平2",
+      "player": "red",
+      "fullText": "车1平2"
+    },
+    {
+      "step": 114,
+      "move": "车八进六",
+      "player": "black",
+      "fullText": "车八进六"
+    },
+    {
+      "step": 115,
+      "move": "马8进7",
+      "player": "red",
+      "fullText": "马8进7"
+    },
+    {
+      "step": 116,
+      "move": "兵五进一",
+      "player": "black",
+      "fullText": "兵五进一"
+    },
+    {
+      "step": 117,
+      "move": "卒7进1",
+      "player": "red",
+      "fullText": "卒7进1"
+    },
+    {
+      "step": 118,
+      "move": "兵五进一",
+      "player": "black",
+      "fullText": "兵五进一"
+    },
+    {
+      "step": 119,
+      "move": "士6进5",
+      "player": "red",
+      "fullText": "士6进5"
+    },
+    {
+      "step": 120,
+      "move": "马七进五",
+      "player": "black",
+      "fullText": "马七进五"
+    },
+    {
+      "step": 121,
+      "move": "炮8进1",
+      "player": "red",
+      "fullText": "炮8进1"
+    },
+    {
+      "step": 122,
+      "move": "车八退二",
+      "player": "black",
+      "fullText": "车八退二"
+    },
+    {
+      "step": 123,
+      "move": "卒5进1",
+      "player": "red",
+      "fullText": "卒5进1"
+    },
+    {
+      "step": 124,
+      "move": "兵三进一",
+      "player": "black",
+      "fullText": "兵三进一"
+    },
+    {
+      "step": 125,
+      "move": "炮8平5",
+      "player": "red",
+      "fullText": "炮8平5"
+    },
+    {
+      "step": 126,
+      "move": "马二进三",
+      "player": "black",
+      "fullText": "马二进三"
+    },
+    {
+      "step": 127,
+      "move": "车9平8",
+      "player": "red",
+      "fullText": "车9平8"
+    },
+    {
+      "step": 128,
+      "move": "车一平二",
+      "player": "black",
+      "fullText": "车一平二"
+    },
+    {
+      "step": 129,
+      "move": "车8进6",
+      "player": "red",
+      "fullText": "车8进6"
+    },
+    {
+      "step": 130,
+      "move": "兵三进一",
+      "player": "black",
+      "fullText": "兵三进一"
+    },
+    {
+      "step": 131,
+      "move": "炮5进3",
+      "player": "red",
+      "fullText": "炮5进3"
+    },
+    {
+      "step": 132,
+      "move": "马三进五",
+      "player": "black",
+      "fullText": "马三进五"
+    },
+    {
+      "step": 133,
+      "move": "车8平5",
+      "player": "red",
+      "fullText": "车8平5"
+    },
+    {
+      "step": 134,
+      "move": "兵三进一",
+      "player": "black",
+      "fullText": "兵三进一"
+    },
+    {
+      "step": 135,
+      "move": "马7退6",
+      "player": "red",
+      "fullText": "马7退6"
+    },
+    {
+      "step": 136,
+      "move": "炮二进七",
+      "player": "black",
+      "fullText": "炮二进七"
+    },
+    {
+      "step": 137,
+      "move": "炮2平1",
+      "player": "red",
+      "fullText": "炮2平1"
+    },
+    {
+      "step": 138,
+      "move": "车八平四",
+      "player": "black",
+      "fullText": "车八平四"
+    },
+    {
+      "step": 139,
+      "move": "车2进3",
+      "player": "red",
+      "fullText": "车2进3"
+    },
+    {
+      "step": 140,
+      "move": "车二进六",
+      "player": "black",
+      "fullText": "车二进六"
+    },
+    {
+      "step": 141,
+      "move": "卒5进1",
+      "player": "red",
+      "fullText": "卒5进1"
+    },
+    {
+      "step": 142,
+      "move": "车四进一",
+      "player": "black",
+      "fullText": "车四进一"
+    },
+    {
+      "step": 143,
+      "move": "车5平7",
+      "player": "red",
+      "fullText": "车5平7"
+    },
+    {
+      "step": 144,
+      "move": "炮五平四",
+      "player": "black",
+      "fullText": "炮五平四"
+    },
+    {
+      "step": 145,
+      "move": "车2平7",
+      "player": "red",
+      "fullText": "车2平7"
+    },
+    {
+      "step": 146,
+      "move": "车二退二",
+      "player": "black",
+      "fullText": "车二退二"
+    },
+    {
+      "step": 147,
+      "move": "车7进1",
+      "player": "red",
+      "fullText": "车7进1"
+    },
+    {
+      "step": 148,
+      "move": "车四进三",
+      "player": "black",
+      "fullText": "车四进三"
+    },
+    {
+      "step": 149,
+      "move": "炮1退1",
+      "player": "red",
+      "fullText": "炮1退1"
+    },
+    {
+      "step": 150,
+      "move": "车四退二",
+      "player": "black",
+      "fullText": "车四退二"
+    },
+    {
+      "step": 151,
+      "move": "马3进4",
+      "player": "red",
+      "fullText": "马3进4"
+    },
+    {
+      "step": 152,
+      "move": "车四平六",
+      "player": "black",
+      "fullText": "车四平六"
+    },
+    {
+      "step": 153,
+      "move": "马4进3",
+      "player": "red",
+      "fullText": "马4进3"
+    },
+    {
+      "step": 154,
+      "move": "炮四平八",
+      "player": "black",
+      "fullText": "炮四平八"
+    },
+    {
+      "step": 155,
+      "move": "车7平4",
+      "player": "red",
+      "fullText": "车7平4"
+    },
+    {
+      "step": 156,
+      "move": "炮八进七",
+      "player": "black",
+      "fullText": "炮八进七"
+    },
+    {
+      "step": 157,
+      "move": "车六退一",
+      "player": "red",
+      "fullText": "车六退一"
+    },
+    {
+      "step": 158,
+      "move": "马3退4",
+      "player": "black",
+      "fullText": "马3退4"
+    },
+    {
+      "step": 159,
+      "move": "车二平五",
+      "player": "red",
+      "fullText": "车二平五"
+    },
+    {
+      "step": 160,
+      "move": "马4退3",
+      "player": "black",
+      "fullText": "马4退3"
+    },
+    {
+      "step": 161,
+      "move": "炮八平九",
+      "player": "red",
+      "fullText": "炮八平九"
+    },
+    {
+      "step": 162,
+      "move": "炮1进5",
+      "player": "black",
+      "fullText": "炮1进5"
+    },
+    {
+      "step": 163,
+      "move": "炮九退六",
+      "player": "red",
+      "fullText": "炮九退六"
+    },
+    {
+      "step": 164,
+      "move": "车7平1",
+      "player": "black",
+      "fullText": "车7平1"
+    },
+    {
+      "step": 165,
+      "move": "车五平一",
+      "player": "red",
+      "fullText": "车五平一"
+    },
+    {
+      "step": 166,
+      "move": "车1平8",
+      "player": "black",
+      "fullText": "车1平8"
+    },
+    {
+      "step": 167,
+      "move": "炮二平四",
+      "player": "red",
+      "fullText": "炮二平四"
+    },
+    {
+      "step": 168,
+      "move": "将5平6",
+      "player": "black",
+      "fullText": "将5平6"
+    },
+    {
+      "step": 169,
+      "move": "车一进二",
+      "player": "red",
+      "fullText": "车一进二"
+    },
+    {
+      "step": 170,
+      "move": "车8退4",
+      "player": "black",
+      "fullText": "车8退4"
+    },
+    {
+      "step": 171,
+      "move": "车一平七",
+      "player": "red",
+      "fullText": "车一平七"
+    },
+    {
+      "step": 172,
+      "move": "相七进五",
+      "player": "black",
+      "fullText": "相七进五"
+    },
+    {
+      "step": 173,
+      "move": "卒1进1",
+      "player": "red",
+      "fullText": "卒1进1"
+    },
+    {
+      "step": 174,
+      "move": "兵一进一",
+      "player": "black",
+      "fullText": "兵一进一"
+    },
+    {
+      "step": 175,
+      "move": "车8平5",
+      "player": "red",
+      "fullText": "车8平5"
+    },
+    {
+      "step": 176,
+      "move": "卒1进1",
+      "player": "black",
+      "fullText": "卒1进1"
+    },
+    {
+      "step": 177,
+      "move": "车七平三",
+      "player": "red",
+      "fullText": "车七平三"
+    },
+    {
+      "step": 178,
+      "move": "车三平二",
+      "player": "black",
+      "fullText": "车三平二"
+    },
+    {
+      "step": 179,
+      "move": "将6平5",
+      "player": "red",
+      "fullText": "将6平5"
+    },
+    {
+      "step": 180,
+      "move": "车二退二",
+      "player": "black",
+      "fullText": "车二退二"
+    },
+    {
+      "step": 181,
+      "move": "卒1进1",
+      "player": "red",
+      "fullText": "卒1进1"
+    },
+    {
+      "step": 182,
+      "move": "车二退一",
+      "player": "black",
+      "fullText": "车二退一"
+    },
+    {
+      "step": 183,
+      "move": "马3进2",
+      "player": "red",
+      "fullText": "马3进2"
+    },
+    {
+      "step": 184,
+      "move": "车5进2",
+      "player": "black",
+      "fullText": "车5进2"
+    },
+    {
+      "step": 185,
+      "move": "帅五平四",
+      "player": "red",
+      "fullText": "帅五平四"
+    },
+    {
+      "step": 186,
+      "move": "车二平三",
+      "player": "black",
+      "fullText": "车二平三"
+    },
+    {
+      "step": 187,
+      "move": "帅四平五",
+      "player": "red",
+      "fullText": "帅四平五"
+    },
+    {
+      "step": 188,
+      "move": "卒1进1",
+      "player": "black",
+      "fullText": "卒1进1"
+    },
+    {
+      "step": 189,
+      "move": "相五退七",
+      "player": "red",
+      "fullText": "相五退七"
+    },
+    {
+      "step": 190,
+      "move": "卒1进1",
+      "player": "black",
+      "fullText": "卒1进1"
+    },
+    {
+      "step": 191,
+      "move": "相七进五",
+      "player": "red",
+      "fullText": "相七进五"
+    },
+    {
+      "step": 192,
+      "move": "马2退3",
+      "player": "black",
+      "fullText": "马2退3"
+    },
+    {
+      "step": 193,
+      "move": "车三平六",
+      "player": "red",
+      "fullText": "车三平六"
+    },
+    {
+      "step": 194,
+      "move": "车5进1",
+      "player": "black",
+      "fullText": "车5进1"
+    },
+    {
+      "step": 195,
+      "move": "车六退二",
+      "player": "red",
+      "fullText": "车六退二"
+    },
+    {
+      "step": 196,
+      "move": "车5平1",
+      "player": "black",
+      "fullText": "车5平1"
+    },
+    {
+      "step": 197,
+      "move": "兵一进一",
+      "player": "red",
+      "fullText": "兵一进一"
+    },
+    {
+      "step": 198,
+      "move": "马3进5",
+      "player": "black",
+      "fullText": "马3进5"
+    },
+    {
+      "step": 199,
+      "move": "马5进6",
+      "player": "red",
+      "fullText": "马5进6"
+    },
+    {
+      "step": 200,
+      "move": "兵一进一",
+      "player": "black",
+      "fullText": "兵一进一"
+    },
+    {
+      "step": 201,
+      "move": "车1进1",
+      "player": "red",
+      "fullText": "车1进1"
+    },
+    {
+      "step": 202,
+      "move": "兵一平二",
+      "player": "black",
+      "fullText": "兵一平二"
+    },
+    {
+      "step": 203,
+      "move": "马6进4",
+      "player": "red",
+      "fullText": "马6进4"
+    },
+    {
+      "step": 204,
+      "move": "兵二平三",
+      "player": "black",
+      "fullText": "兵二平三"
+    },
+    {
+      "step": 205,
+      "move": "卒3进1",
+      "player": "red",
+      "fullText": "卒3进1"
+    },
+    {
+      "step": 206,
+      "move": "兵三进一",
+      "player": "black",
+      "fullText": "兵三进一"
+    },
+    {
+      "step": 207,
+      "move": "卒3进1",
+      "player": "red",
+      "fullText": "卒3进1"
+    },
+    {
+      "step": 208,
+      "move": "兵三进一",
+      "player": "black",
+      "fullText": "兵三进一"
+    },
+    {
+      "step": 209,
+      "move": "士5退6",
+      "player": "red",
+      "fullText": "士5退6"
+    },
+    {
+      "step": 210,
+      "move": "兵三平四",
+      "player": "black",
+      "fullText": "兵三平四"
+    },
+    {
+      "step": 211,
+      "move": "士4进5",
+      "player": "red",
+      "fullText": "士4进5"
+    },
+    {
+      "step": 212,
+      "move": "卒3进1",
+      "player": "black",
+      "fullText": "卒3进1"
+    },
+    {
+      "step": 213,
+      "move": "马4进3",
+      "player": "red",
+      "fullText": "马4进3"
+    },
+    {
+      "step": 214,
+      "move": "卒1平2",
+      "player": "black",
+      "fullText": "卒1平2"
+    }
+  ],
+  "totalMoves": 214,
+  "crawledAt": "2025-09-23T05:57:54.998Z"
+}

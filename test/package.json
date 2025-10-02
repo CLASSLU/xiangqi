@@ -1,0 +1,27 @@
+{
+  "name": "xiangqi-chess-tests",
+  "version": "1.0.0",
+  "description": "中国象棋游戏测试套件",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "keywords": [
+    "chess",
+    "xiangqi",
+    "test",
+    "jest"
+  ],
+  "author": "Tester",
+  "license": "MIT",
+  "devDependencies": {
+    "cheerio": "^1.1.2",
+    "jest": "^29.0.0",
+    "jest-environment-jsdom": "^29.0.0",
+    "jsdom": "^22.0.0",
+    "puppeteer": "^24.22.0",
+    "util": "^0.12.5"
+  }
+}

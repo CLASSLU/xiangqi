@@ -1,0 +1,935 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    max-width: 1200px;
+    width: 100%;
+}
+
+/* 主游戏区域布局 */
+.main-game-area {
+    display: flex;
+    gap: 20px;
+    min-height: 500px;
+}
+
+.game-section {
+    flex: 2;
+    min-width: 450px;
+}
+
+/* 侧边栏样式 */
+.record-sidebar {
+    flex: 1;
+    max-width: 350px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    max-height: 600px;
+}
+
+.record-sidebar.hidden {
+    display: none;
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.sidebar-header h3 {
+    margin: 0;
+    color: #d32f2f;
+    font-size: 1.2em;
+}
+
+/* 紧凑的棋谱按钮 */
+.record-buttons-compact {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.record-btn {
+    padding: 8px 12px;
+    border: 1px solid #4CAF50;
+    border-radius: 4px;
+    background: #f8f9fa;
+    color: #2e7d32;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.record-btn:hover {
+    background: #e8f5e8;
+    transform: translateY(-1px);
+}
+
+.record-btn.selected {
+    background: #4CAF50;
+    color: white;
+}
+
+/* 紧凑的播放控制 */
+.record-controls {
+    margin-top: 15px;
+}
+
+.record-controls.hidden {
+    display: none;
+}
+
+.current-record h4 {
+    margin: 0 0 10px 0;
+    color: #d32f2f;
+    font-size: 1em;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.play-controls-compact {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.ctrl-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.ctrl-btn.play {
+    background: #4CAF50;
+    color: white;
+}
+
+.ctrl-btn.pause {
+    background: #ff9800;
+    color: white;
+}
+
+.ctrl-btn.reset {
+    background: #f44336;
+    color: white;
+}
+
+.ctrl-btn:hover {
+    transform: scale(1.1);
+}
+
+.ctrl-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.speed-select {
+    flex: 1;
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    font-size: 0.85em;
+    margin-left: 5px;
+}
+
+/* 紧凑的步骤列表 */
+.record-steps-compact {
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.steps-list-compact {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.step-item {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9em;
+}
+
+.step-item:last-child {
+    border-bottom: none;
+}
+
+.step-item:hover {
+    background: #e3f2fd;
+}
+
+.step-item.active {
+    background: #2196F3;
+    color: white;
+    font-weight: bold;
+}
+
+.step-item.played {
+    background: #e8f5e8;
+    color: #2e7d32;
+}
+
+.step-number {
+    width: 30px;
+    text-align: center;
+    font-weight: bold;
+    color: #666;
+    font-size: 0.8em;
+}
+
+.step-item.active .step-number {
+    color: white;
+}
+
+.step-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.step-notation {
+    font-weight: bold;
+    line-height: 1.2;
+}
+
+.step-description {
+    color: #666;
+    font-size: 0.8em;
+    line-height: 1.1;
+}
+
+.step-item.active .step-description {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+h1 {
+    color: #d32f2f;
+    font-size: 2.5em;
+    margin-bottom: 15px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.game-controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background: #4CAF50;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+/* 音频控制按钮特殊样式 */
+.audio-btn {
+    background: #2196f3;
+    position: relative;
+}
+
+.audio-btn.muted {
+    background: #f44336;
+}
+
+.audio-btn.muted::after {
+    content: '🔇';
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* 音量控制面板 */
+.audio-controls {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    padding: 15px;
+    margin: 10px 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.volume-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 200px;
+}
+
+.volume-control label {
+    font-weight: bold;
+    color: #333;
+    white-space: nowrap;
+}
+
+.volume-slider {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: #ddd;
+    outline: none;
+    transition: all 0.3s;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #4CAF50;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s;
+}
+
+.volume-slider::-webkit-slider-thumb:hover {
+    background: #45a049;
+    transform: scale(1.1);
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #4CAF50;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.volume-control span {
+    font-weight: bold;
+    color: #666;
+    min-width: 40px;
+    text-align: right;
+}
+
+button:hover {
+    background: #45a049;
+    transform: translateY(-2px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+.game-board {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.board {
+    position: relative;
+    width: 560px;  /* 8 * 70px = 560px（内容大小）*/
+    height: 630px; /* 9 * 70px = 630px（内容大小）*/
+    background: #f4e6d0;
+    border: 4px solid #8b4513;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    box-sizing: content-box; /* 关键修复：使用content-box模型 */
+}
+
+/* 移除CSS伪元素，改用JavaScript绘制 */
+
+/* 楚河汉界 */
+.river {
+    position: absolute;
+    top: 280px;  /* 4 * 70px = 280px（在第4行和第5行之间）*/
+    left: 0;
+    right: 0;
+    height: 70px;
+    background: #f4e6d0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 28px;
+    color: #8b4513;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* 炮位十字标记 */
+.cannon-cross {
+    position: absolute;
+    pointer-events: none;
+    z-index: 3;
+    width: 20px;
+    height: 20px;
+}
+
+.cannon-cross::before,
+.cannon-cross::after {
+    content: '';
+    position: absolute;
+    background: #2D1810;
+}
+
+.cannon-cross::before {
+    width: 20px;
+    height: 2px;
+    top: 9px;
+    left: 0;
+}
+
+.cannon-cross::after {
+    width: 2px;
+    height: 20px;
+    top: 0;
+    left: 9px;
+}
+
+/* 兵位十字标记 */
+.soldier-cross {
+    position: absolute;
+    pointer-events: none;
+    z-index: 3;
+    width: 16px;
+    height: 16px;
+}
+
+.soldier-cross::before,
+.soldier-cross::after {
+    content: '';
+    position: absolute;
+    background: #2D1810;
+}
+
+.soldier-cross::before {
+    width: 16px;
+    height: 1px;
+    top: 7px;
+    left: 0;
+}
+
+.soldier-cross::after {
+    width: 1px;
+    height: 16px;
+    top: 0;
+    left: 7px;
+}
+
+/* 炮位十字标记 */
+.cannon-cross {
+    position: absolute;
+    pointer-events: none;
+    z-index: 3;
+    width: 20px;
+    height: 20px;
+}
+
+.cannon-cross::before,
+.cannon-cross::after {
+    content: '';
+    position: absolute;
+    background: #2D1810;
+}
+
+.cannon-cross::before {
+    width: 20px;
+    height: 2px;
+    top: 9px;
+    left: 0;
+}
+
+.cannon-cross::after {
+    width: 2px;
+    height: 20px;
+    top: 0;
+    left: 9px;
+}
+
+/* 兵位十字标记 */
+.soldier-cross {
+    position: absolute;
+    pointer-events: none;
+    z-index: 3;
+    width: 16px;
+    height: 16px;
+}
+
+.soldier-cross::before,
+.soldier-cross::after {
+    content: '';
+    position: absolute;
+    background: #2D1810;
+}
+
+.soldier-cross::before {
+    width: 16px;
+    height: 1px;
+    top: 7px;
+    left: 0;
+}
+
+.soldier-cross::after {
+    width: 1px;
+    height: 16px;
+    top: 0;
+    left: 7px;
+}
+
+.piece {
+    position: absolute;
+    width: 58px;  /* 扩大棋子尺寸适配70px格子 */
+    height: 58px; /* 扩大棋子尺寸适配70px格子 */
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px; /* 增大字体 */
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 3px solid #000; /* 增加边框宽度 */
+    user-select: none;
+    /* 调整棋子位置，使其位于交叉点上 */
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.piece.red {
+    background: linear-gradient(145deg, #ff6b6b, #d32f2f);
+    color: #fff;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+.piece.black {
+    background: linear-gradient(145deg, #2c3e50, #1a1a2e);
+    color: #fff;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+.piece.selected {
+    box-shadow: 0 0 15px #ffeb3b;
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+.piece.valid-move {
+    box-shadow: 0 0 10px #4CAF50;
+}
+
+/* 可移动位置的高亮样式 */
+.cell.valid-move {
+    background: rgba(76, 175, 80, 0.8);
+    border-radius: 50%;
+    width: 12px;
+    height: 12px;
+    position: absolute;
+    /* 使用和棋子相同的居中对齐方式 */
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    pointer-events: auto;
+    border: 2px solid #4CAF50;
+}
+
+.cell.valid-move::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 4px;
+    height: 4px;
+    background: #4CAF50;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.status {
+    text-align: center;
+    font-size: 18px;
+    margin-bottom: 15px;
+}
+
+.captured-pieces {
+    display: flex;
+    justify-content: space-around;
+    font-size: 16px;
+    color: #666;
+}
+
+.red-captured, .black-captured {
+    padding: 5px 10px;
+    background: #f5f5f5;
+    border-radius: 5px;
+}
+
+/* 棋谱展示面板样式 */
+.record-panel {
+    position: fixed;
+    top: 0;
+    right: -350px; /* 初始隐藏在右侧 */
+    width: 350px;
+    height: 100%;
+    background: #f8f9fa;
+    z-index: 1000;
+    padding: 20px;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.2);
+    overflow-y: auto;
+    transition: right 0.3s ease;
+}
+
+.record-panel:not(.hidden) {
+    right: 0; /* 显示时滑入 */
+}
+
+.record-panel.hidden {
+    right: -350px; /* 隐藏时滑出 */
+}
+
+/* 调整面板内容样式 */
+.record-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.record-header h2 {
+    margin: 0;
+    color: #d32f2f;
+    font-size: 1.2em;
+}
+
+/* 棋谱选择按钮紧凑样式 */
+.record-buttons {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+/* 棋谱分类样式 */
+.record-category {
+    margin-bottom: 20px;
+}
+
+.record-category h4 {
+    margin: 0 0 10px 0;
+    color: #2c3e50;
+    font-size: 16px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+}
+
+.record-category .record-btn {
+    margin-bottom: 5px;
+    width: 100%;
+}
+
+/* 棋谱步骤显示样式 */
+.steps-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.step-item {
+    padding: 8px 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    margin-bottom: 5px;
+    background: #f9f9f9;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9em;
+}
+
+.step-item:hover {
+    background: #e8f5e8;
+    border-color: #4CAF50;
+}
+
+.step-item.active {
+    background: #4CAF50;
+    color: white;
+    border-color: #45a049;
+}
+
+.record-btn {
+    padding: 8px 12px;
+    border: 1px solid #4CAF50;
+    border-radius: 4px;
+    background: #f8f9fa;
+    color: #2e7d32;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.record-btn:hover {
+    background: #e8f5e8;
+    transform: translateY(-1px);
+}
+
+.record-btn.selected {
+    background: #4CAF50;
+    color: white;
+}
+
+/* 播放控制紧凑样式 */
+.play-controls {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    flex-wrap: wrap;
+}
+
+.play-controls button {
+    padding: 6px 8px;
+    font-size: 12px;
+    min-width: auto;
+}
+
+.speed-control {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 5px;
+}
+
+.speed-control select {
+    padding: 4px 6px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    font-size: 0.85em;
+}
+
+/* 步骤列表紧凑样式 */
+.steps-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 300px;
+    overflow-y: auto;
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.step-item {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9em;
+}
+
+.step-item:last-child {
+    border-bottom: none;
+}
+
+.step-item:hover {
+    background: #e3f2fd;
+}
+
+.step-item.active {
+    background: #2196F3;
+    color: white;
+    font-weight: bold;
+}
+
+.step-item.played {
+    background: #e8f5e8;
+    color: #2e7d32;
+}
+
+.step-number {
+    width: 30px;
+    text-align: center;
+    font-weight: bold;
+    color: #666;
+    font-size: 0.8em;
+}
+
+.step-item.active .step-number {
+    color: white;
+}
+
+.step-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.step-notation {
+    font-weight: bold;
+    line-height: 1.2;
+}
+
+.step-description {
+    color: #666;
+    font-size: 0.8em;
+    line-height: 1.1;
+}
+
+.step-item.active .step-description {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+    .record-panel {
+        width: 350px;
+    }
+}
+
+@media (max-width: 900px) {
+    .record-panel {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        width: auto;
+        height: 300px;
+    }
+    
+    .steps-list {
+        max-height: 200px;
+    }
+}
+
+@media (max-width: 600px) {
+    .board {
+        width: 448px;  /* 调整为正确比例：64px×7格 = 448px */
+        height: 504px; /* 调整为正确比例：56px×9格 = 504px */
+    }
+    
+    .piece {
+        width: 46px;   /* 缩小棋子 */
+        height: 46px;  /* 缩小棋子 */
+        font-size: 18px;
+    }
+    
+    h1 {
+        font-size: 2em;
+    }
+    
+    /* 音频控制响应式调整 */
+    .audio-controls {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .volume-control {
+        min-width: auto;
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .volume-control label {
+        font-size: 14px;
+    }
+    
+    .game-controls {
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    .game-controls button {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+    
+    .record-panel {
+        position: fixed;
+        bottom: 10px;
+        top: auto;
+        left: 10px;
+        right: 10px;
+        height: 250px;
+    }
+    
+    .play-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+    }
+    
+    .play-controls button {
+        padding: 8px;
+        font-size: 14px;
+    }
+    
+    .speed-control {
+        justify-content: center;
+    }
+}
