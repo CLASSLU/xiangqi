@@ -5,6 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>中国象棋 - 单机版</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .series-btn {
+            position: relative;
+            text-align: left;
+            padding: 12px 15px;
+        }
+        
+        .game-count {
+            position: absolute;
+            right: 10px;
+            background: rgba(0,0,0,0.1);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.8em;
+        }
+        
+        .series-games-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+        
+        .series-game-item {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 8px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .series-game-item:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateX(5px);
+        }
+        
+        .game-title {
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 5px;
+        }
+        
+        .game-info {
+            color: #87ceeb;
+            font-size: 0.9em;
+            margin-bottom: 3px;
+        }
+        
+        .game-meta {
+            color: #98fb98;
+            font-size: 0.85em;
+            margin-bottom: 3px;
+        }
+        
+        .game-moves {
+            color: #ffa07a;
+            font-size: 0.8em;
+        }
+        
+        .back-btn {
+            background: #666;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+        
+        .back-btn:hover {
+            background: #777;
+        }
+    </style>
     <script src="audio-manager.js"></script>
     <script src="chess-notation-parser.js"></script>
 </head>
@@ -104,6 +178,17 @@
                 <ol id="stepsList" class="steps-list">
                     <!-- 棋谱步骤将由JavaScript生成 -->
                 </ol>
+            </div>
+        </div>
+
+        <!-- 棋谱系列展示区域 -->
+        <div id="seriesDisplay" class="record-display hidden">
+            <div class="record-info">
+                <h3 id="seriesTitle">棋谱系列</h3>
+                <button id="backToSeries" class="back-btn">← 返回系列列表</button>
+            </div>
+            <div class="series-games-list" id="seriesGamesList">
+                <!-- 系列中的棋谱列表将由JavaScript生成 -->
             </div>
         </div>
     </div>

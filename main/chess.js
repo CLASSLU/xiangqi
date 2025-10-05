@@ -1204,9 +1204,252 @@ class XiangqiGame {
             // 重置棋谱面板状态到选择界面
             const recordSelection = document.querySelector('.record-selection');
             const recordDisplay = document.getElementById('recordDisplay');
+            const seriesDisplay = document.getElementById('seriesDisplay');
 
             if (recordSelection) recordSelection.classList.remove('hidden');
             if (recordDisplay) recordDisplay.classList.add('hidden');
+            if (seriesDisplay) seriesDisplay.classList.add('hidden');
+
+            // 加载爬取棋谱系列
+            this.loadScrapedGameSeries();
+        }
+    }
+
+    // 加载爬取棋谱系列
+    async loadScrapedGameSeries() {
+        try {
+            console.log('加载爬取棋谱系列...');
+            
+            // 尝试从多个可能的文件位置加载数据
+            const possiblePaths = [
+                'data/qipu-games/game_compatible_games.json',
+                'data/qipu-games/complete_database_all.json',
+                'data/qipu-games/leveled_complete_database.json'
+            ];
+            
+            let scrapedGames = null;
+            
+            for (const path of possiblePaths) {
+                try {
+                    const response = await fetch(path);
+                    if (response.ok) {
+                        const data = await response.json();
+                        scrapedGames = data;
+                        console.log(`成功加载棋谱文件: ${path}`);
+                        break;
+                    }
+                } catch (error) {
+                    console.log(`无法加载 ${path}:`, error.message);
+                    continue;
+                }
+            }
+            
+            if (!scrapedGames) {
+                console.log('未找到爬取的棋谱文件');
+                return;
+            }
+            
+            // 处理棋谱数据，按系列分组
+            const gameSeries = this.groupGamesIntoSeries(scrapedGames);
+            
+            // 显示棋谱系列
+            this.displayGameSeries(gameSeries);
+            
+        } catch (error) {
+            console.error('加载爬取棋谱系列失败:', error);
+        }
+    }
+
+    // 将棋谱按名称分组为系列
+    groupGamesIntoSeries(scrapedGames) {
+        const seriesMap = new Map();
+        
+        // 处理不同的数据格式
+        let games = [];
+        if (scrapedGames.games) {
+            // complete_database_all.json 格式
+            games = scrapedGames.games;
+        } else {
+            // game_compatible_games.json 格式
+            games = Object.entries(scrapedGames).map(([name, data]) => ({
+                title: name,
+                ...data
+            }));
+        }
+        
+        games.forEach(game => {
+            if (!game.title) return;
+            
+            // 提取系列名称（去除数字和特殊字符，取前几个关键词）
+            const seriesName = this.extractSeriesName(game.title);
+            
+            if (!seriesMap.has(seriesName)) {
+                seriesMap.set(seriesName, []);
+            }
+            
+            seriesMap.get(seriesName).push(game);
+        });
+        
+        // 转换为数组并排序
+        const seriesArray = Array.from(seriesMap.entries()).map(([seriesName, games]) => ({
+            name: seriesName,
+            games: games.sort((a, b) => {
+                // 按标题排序
+                return a.title.localeCompare(b.title, 'zh-CN');
+            }),
+            count: games.length
+        }));
+        
+        // 按系列中的棋谱数量排序
+        return seriesArray.sort((a, b) => b.count - a.count);
+    }
+
+    // 从棋谱名称中提取系列名称
+    extractSeriesName(title) {
+        // 移除数字和特殊字符
+        let cleanTitle = title.replace(/[\d\s\-_]+/g, ' ').trim();
+        
+        // 常见象棋开局和布局关键词
+        const openingKeywords = [
+            '中炮', '屏风马', '顺炮', '列炮', '飞相', '仙人指路', '过宫炮',
+            '反宫马', '单提马', '士角炮', '起马局', '进兵局', '对兵局'
+        ];
+        
+        // 查找包含的关键词
+        for (const keyword of openingKeywords) {
+            if (cleanTitle.includes(keyword)) {
+                return keyword + '系列';
+            }
+        }
+        
+        // 如果没有匹配的关键词，取前2-4个字符作为系列名
+        if (cleanTitle.length <= 4) {
+            return cleanTitle + '系列';
+        } else {
+            return cleanTitle.substring(0, 4) + '...';
+        }
+    }
+
+    // 显示棋谱系列
+    displayGameSeries(seriesArray) {
+        const recordButtons = document.getElementById('recordButtons');
+        if (!recordButtons) return;
+        
+        // 清空现有按钮（保留经典棋谱部分）
+        const classicCategories = recordButtons.querySelectorAll('.record-category');
+        recordButtons.innerHTML = '';
+        
+        // 重新添加经典棋谱分类
+        classicCategories.forEach(category => {
+            recordButtons.appendChild(category);
+        });
+        
+        // 添加爬取棋谱系列
+        if (seriesArray.length > 0) {
+            const scrapedCategory = document.createElement('div');
+            scrapedCategory.className = 'record-category';
+            scrapedCategory.innerHTML = '<h4>爬取棋谱系列</h4>';
+            
+            seriesArray.forEach(series => {
+                const seriesButton = document.createElement('button');
+                seriesButton.className = 'record-btn series-btn';
+                seriesButton.setAttribute('data-series', series.name);
+                seriesButton.innerHTML = `
+                    ${series.name}
+                    <span class="game-count">(${series.count}局)</span>
+                `;
+                
+                seriesButton.addEventListener('click', () => {
+                    this.showSeriesGames(series);
+                });
+                
+                scrapedCategory.appendChild(seriesButton);
+            });
+            
+            recordButtons.appendChild(scrapedCategory);
+        }
+    }
+
+    // 显示系列中的具体棋谱
+    showSeriesGames(series) {
+        // 隐藏选择界面，显示系列详情界面
+        document.querySelector('.record-selection').classList.add('hidden');
+        
+        const seriesDisplay = document.getElementById('seriesDisplay');
+        if (seriesDisplay) {
+            seriesDisplay.classList.remove('hidden');
+            
+            // 设置系列标题
+            const seriesTitle = seriesDisplay.querySelector('#seriesTitle');
+            if (seriesTitle) {
+                seriesTitle.textContent = `${series.name} (${series.count}局)`;
+            }
+            
+            // 显示系列中的棋谱列表
+            const seriesGamesList = seriesDisplay.querySelector('#seriesGamesList');
+            if (seriesGamesList) {
+                seriesGamesList.innerHTML = '';
+                
+                series.games.forEach((game, index) => {
+                    const gameItem = document.createElement('div');
+                    gameItem.className = 'series-game-item';
+                    
+                    // 构建棋谱信息
+                    const playersInfo = game.players ? 
+                        `${game.players.red || '未知'} vs ${game.players.black || '未知'}` : 
+                        '选手信息未知';
+                    
+                    const resultInfo = game.result ? `结果: ${game.result}` : '';
+                    const eventInfo = game.event ? `赛事: ${game.event}` : '';
+                    
+                    gameItem.innerHTML = `
+                        <div class="game-title">${game.title || `棋谱 ${index + 1}`}</div>
+                        <div class="game-info">${playersInfo}</div>
+                        <div class="game-meta">${resultInfo} ${eventInfo}</div>
+                        <div class="game-moves">步数: ${game.moves ? game.moves.length : 0}</div>
+                    `;
+                    
+                    gameItem.addEventListener('click', () => {
+                        this.loadScrapedGameFromSeries(game);
+                    });
+                    
+                    seriesGamesList.appendChild(gameItem);
+                });
+            }
+            
+            // 返回按钮
+            const backButton = seriesDisplay.querySelector('#backToSeries');
+            if (backButton) {
+                backButton.onclick = () => {
+                    seriesDisplay.classList.add('hidden');
+                    document.querySelector('.record-selection').classList.remove('hidden');
+                };
+            }
+        }
+    }
+
+    // 从系列中加载具体棋谱
+    loadScrapedGameFromSeries(game) {
+        console.log(`加载棋谱: ${game.title}`);
+        
+        // 隐藏系列显示，显示棋谱播放界面
+        document.getElementById('seriesDisplay').classList.add('hidden');
+        document.getElementById('recordDisplay').classList.remove('hidden');
+        
+        // 设置棋谱标题
+        const recordTitle = document.getElementById('recordTitle');
+        if (recordTitle) {
+            const playersInfo = game.players ? 
+                ` - ${game.players.red || '未知'} vs ${game.players.black || '未知'}` : '';
+            recordTitle.textContent = `${game.title}${playersInfo}`;
+        }
+        
+        // 加载并播放棋谱
+        if (game.moves && Array.isArray(game.moves)) {
+            this.loadAndPlayClassicGameWithData(game.title, game.moves);
+        } else {
+            console.error('棋谱数据格式错误:', game);
+            alert('棋谱数据格式错误，无法播放');
         }
     }
 
