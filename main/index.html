@@ -10,73 +10,115 @@
             position: relative;
             text-align: left;
             padding: 12px 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            margin: 5px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .series-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            background: linear-gradient(135deg, #764ba2, #667eea);
         }
         
         .game-count {
             position: absolute;
             right: 10px;
-            background: rgba(0,0,0,0.1);
-            padding: 2px 6px;
-            border-radius: 10px;
+            background: rgba(255,255,255,0.2);
+            padding: 2px 8px;
+            border-radius: 12px;
             font-size: 0.8em;
+            font-weight: bold;
         }
         
         .series-games-list {
-            max-height: 400px;
+            max-height: 500px;
             overflow-y: auto;
             margin-top: 15px;
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
         }
         
         .series-game-item {
-            background: rgba(255,255,255,0.1);
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
             border: 1px solid rgba(255,255,255,0.2);
             border-radius: 8px;
-            padding: 12px;
-            margin: 8px 0;
+            padding: 15px;
+            margin: 10px 0;
             cursor: pointer;
             transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
         .series-game-item:hover {
-            background: rgba(255,255,255,0.2);
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
             transform: translateX(5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
         
         .game-title {
             font-weight: bold;
             color: #ffd700;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            font-size: 1.1em;
         }
         
         .game-info {
             color: #87ceeb;
             font-size: 0.9em;
-            margin-bottom: 3px;
+            margin-bottom: 5px;
         }
         
         .game-meta {
             color: #98fb98;
             font-size: 0.85em;
-            margin-bottom: 3px;
+            margin-bottom: 5px;
         }
         
         .game-moves {
             color: #ffa07a;
             font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .game-quality {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            margin-left: 8px;
+            background: rgba(255,255,255,0.2);
         }
         
         .back-btn {
-            background: #666;
+            background: linear-gradient(135deg, #666, #888);
             color: white;
             border: none;
-            padding: 8px 15px;
+            padding: 10px 20px;
             border-radius: 5px;
             cursor: pointer;
             margin-bottom: 15px;
+            transition: all 0.3s ease;
         }
         
         .back-btn:hover {
-            background: #777;
+            background: linear-gradient(135deg, #888, #aaa);
+            transform: translateY(-1px);
+        }
+        
+        .series-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(255,255,255,0.3);
         }
     </style>
     <script src="audio-manager.js"></script>
@@ -183,9 +225,12 @@
 
         <!-- 棋谱系列展示区域 -->
         <div id="seriesDisplay" class="record-display hidden">
-            <div class="record-info">
+            <div class="series-header">
                 <h3 id="seriesTitle">棋谱系列</h3>
                 <button id="backToSeries" class="back-btn">← 返回系列列表</button>
+            </div>
+            <div class="series-info" id="seriesInfo">
+                <!-- 系列统计信息 -->
             </div>
             <div class="series-games-list" id="seriesGamesList">
                 <!-- 系列中的棋谱列表将由JavaScript生成 -->

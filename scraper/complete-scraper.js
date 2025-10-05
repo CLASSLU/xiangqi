@@ -784,36 +784,133 @@ class CompleteGameScraper {
     }
 
     /**
-     * 转换为游戏兼容的棋谱格式，保留原始名称
+     * 转换为游戏兼容的棋谱格式，保留原始名称和完整元数据
      */
     convertToGameFormat(games) {
         const gameFormat = {};
         
         games.forEach((game, index) => {
             if (game.moves && game.moves.length > 0) {
+                // 使用原始标题作为键，确保名称唯一性
                 const gameName = game.title || `爬取棋谱${index + 1}`;
+                const uniqueName = this.makeUniqueName(gameFormat, gameName, index);
                 
                 // 将棋谱转换为游戏可用的格式
                 const convertedMoves = this.convertMovesToGameFormat(game.moves);
                 
                 if (convertedMoves.length > 0) {
-                    gameFormat[gameName] = {
+                    gameFormat[uniqueName] = {
                         moves: convertedMoves,
                         originalTitle: game.title,
                         players: {
-                            red: game.playerRed,
-                            black: game.playerBlack
+                            red: game.playerRed || '未知红方',
+                            black: game.playerBlack || '未知黑方'
                         },
-                        result: game.result,
-                        event: game.event,
-                        date: game.date,
-                        classification: game.classification
+                        result: game.result || '未知结果',
+                        event: game.event || '未知赛事',
+                        date: game.date || new Date().toISOString().split('T')[0],
+                        classification: game.classification || {
+                            level: 'basic',
+                            levelText: '基础级',
+                            description: '爬取棋谱',
+                            color: '#4CAF50',
+                            score: 20,
+                            factors: ['爬取数据'],
+                            recommendation: '建议学习',
+                            difficulty: 'beginner'
+                        },
+                        source: game.source || 'scraper',
+                        moveCount: game.moves.length,
+                        // 添加用于分组的字段
+                        seriesName: this.extractSeriesName(game.title),
+                        qualityScore: game.classification?.score || 20
                     };
                 }
             }
         });
         
         return gameFormat;
+    }
+
+    /**
+     * 确保名称唯一性
+     */
+    makeUniqueName(gameFormat, baseName, index) {
+        if (!gameFormat[baseName]) {
+            return baseName;
+        }
+        
+        // 如果名称已存在，添加序号
+        let counter = 1;
+        let newName = `${baseName}_${counter}`;
+        while (gameFormat[newName]) {
+            counter++;
+            newName = `${baseName}_${counter}`;
+        }
+        return newName;
+    }
+
+    /**
+     * 从棋谱名称中提取系列名称
+     */
+    extractSeriesName(title) {
+        if (!title) return '其他棋谱';
+        
+        // 移除数字和特殊字符
+        let cleanTitle = title.replace(/[\d\s\-_]+/g, ' ').trim();
+        
+        // 常见象棋开局和布局关键词
+        const openingKeywords = [
+            '中炮', '屏风马', '顺炮', '列炮', '飞相', '仙人指路', '过宫炮',
+            '反宫马', '单提马', '士角炮', '起马局', '进兵局', '对兵局',
+            '五七炮', '五八炮', '五六炮', '巡河炮', '过河炮', '夹马炮',
+            '横车', '直车', '巡河车', '过河车', '贴身车'
+        ];
+        
+        // 查找包含的关键词
+        for (const keyword of openingKeywords) {
+            if (cleanTitle.includes(keyword)) {
+                return keyword + '系列';
+            }
+        }
+        
+        // 选手名称系列
+        const playerNames = [
+            '胡荣华', '许银川', '吕钦', '王天一', '郑惟桐', '赵鑫鑫',
+            '蒋川', '洪智', '谢靖', '孙勇征', '徐超', '汪洋'
+        ];
+        
+        for (const player of playerNames) {
+            if (cleanTitle.includes(player)) {
+                return player + '对局';
+            }
+        }
+        
+        // 赛事系列
+        const eventKeywords = [
+            '全国象棋', '个人赛', '团体赛', '甲级联赛', '大师赛', '冠军赛',
+            '锦标赛', '杯赛', '邀请赛', '挑战赛'
+        ];
+        
+        for (const event of eventKeywords) {
+            if (cleanTitle.includes(event)) {
+                return event + '精选';
+            }
+        }
+        
+        // 如果没有匹配的关键词，取前3-6个字符作为系列名
+        if (cleanTitle.length <= 3) {
+            return cleanTitle;
+        } else if (cleanTitle.length <= 6) {
+            return cleanTitle;
+        } else {
+            // 尝试按常见分隔符分割
+            const segments = cleanTitle.split(/[·\-_]/);
+            if (segments.length > 1 && segments[0].length >= 2) {
+                return segments[0];
+            }
+            return cleanTitle.substring(0, 6) + '...';
+        }
     }
 
     /**

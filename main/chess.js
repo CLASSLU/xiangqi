@@ -1224,7 +1224,8 @@ class XiangqiGame {
             const possiblePaths = [
                 'data/qipu-games/game_compatible_games.json',
                 'data/qipu-games/complete_database_all.json',
-                'data/qipu-games/leveled_complete_database.json'
+                'data/qipu-games/leveled_complete_database.json',
+                '../scraper/complete-database/game_compatible_games.json'
             ];
             
             let scrapedGames = null;
@@ -1235,7 +1236,7 @@ class XiangqiGame {
                     if (response.ok) {
                         const data = await response.json();
                         scrapedGames = data;
-                        console.log(`成功加载棋谱文件: ${path}`);
+                        console.log(`成功加载棋谱文件: ${path}`, data);
                         break;
                     }
                 } catch (error) {
@@ -1245,7 +1246,9 @@ class XiangqiGame {
             }
             
             if (!scrapedGames) {
-                console.log('未找到爬取的棋谱文件');
+                console.log('未找到爬取的棋谱文件，将显示示例数据');
+                // 提供一些示例数据用于测试
+                this.displayGameSeries(this.createSampleSeriesData());
                 return;
             }
             
@@ -1257,7 +1260,31 @@ class XiangqiGame {
             
         } catch (error) {
             console.error('加载爬取棋谱系列失败:', error);
+            // 出错时显示示例数据
+            this.displayGameSeries(this.createSampleSeriesData());
         }
+    }
+
+    // 创建示例系列数据用于测试
+    createSampleSeriesData() {
+        return [
+            {
+                name: '中炮系列',
+                games: [
+                    {
+                        title: '中炮对屏风马经典对局',
+                        players: { red: '红方选手', black: '黑方选手' },
+                        result: '红胜',
+                        event: '测试赛事',
+                        moves: [
+                            ['red', 'cannon', [7, 1], [7, 4], '炮二平五'],
+                            ['black', 'horse', [0, 7], [2, 6], '马8进7']
+                        ]
+                    }
+                ],
+                count: 1
+            }
+        ];
     }
 
     // 将棋谱按名称分组为系列
@@ -1267,21 +1294,28 @@ class XiangqiGame {
         // 处理不同的数据格式
         let games = [];
         if (scrapedGames.games) {
-            // complete_database_all.json 格式
-            games = scrapedGames.games;
+            // complete_database_all.json 格式 - 数组格式
+            games = scrapedGames.games.map(game => ({
+                title: game.title || '未知棋谱',
+                ...game
+            }));
         } else {
-            // game_compatible_games.json 格式
+            // game_compatible_games.json 格式 - 对象格式
             games = Object.entries(scrapedGames).map(([name, data]) => ({
-                title: name,
+                title: data.originalTitle || name,
                 ...data
             }));
         }
         
-        games.forEach(game => {
-            if (!game.title) return;
+        console.log(`处理 ${games.length} 个棋谱进行分组`);
+        
+        games.forEach((game, index) => {
+            if (!game.title) {
+                game.title = `棋谱${index + 1}`;
+            }
             
-            // 提取系列名称（去除数字和特殊字符，取前几个关键词）
-            const seriesName = this.extractSeriesName(game.title);
+            // 使用棋谱中的seriesName字段，如果没有则从标题提取
+            const seriesName = game.seriesName || this.extractSeriesName(game.title);
             
             if (!seriesMap.has(seriesName)) {
                 seriesMap.set(seriesName, []);
@@ -1294,25 +1328,42 @@ class XiangqiGame {
         const seriesArray = Array.from(seriesMap.entries()).map(([seriesName, games]) => ({
             name: seriesName,
             games: games.sort((a, b) => {
-                // 按标题排序
-                return a.title.localeCompare(b.title, 'zh-CN');
+                // 按质量分数或标题排序
+                const scoreA = a.qualityScore || a.classification?.score || 0;
+                const scoreB = b.qualityScore || b.classification?.score || 0;
+                if (scoreA !== scoreB) {
+                    return scoreB - scoreA; // 按质量降序
+                }
+                return (a.title || '').localeCompare(b.title || '', 'zh-CN');
             }),
             count: games.length
         }));
         
-        // 按系列中的棋谱数量排序
-        return seriesArray.sort((a, b) => b.count - a.count);
+        // 按系列中的棋谱数量和质量排序
+        return seriesArray.sort((a, b) => {
+            if (a.count !== b.count) {
+                return b.count - a.count; // 按数量降序
+            }
+            // 如果数量相同，按平均质量排序
+            const avgScoreA = a.games.reduce((sum, game) => sum + (game.qualityScore || game.classification?.score || 0), 0) / a.count;
+            const avgScoreB = b.games.reduce((sum, game) => sum + (game.qualityScore || game.classification?.score || 0), 0) / b.count;
+            return avgScoreB - avgScoreA;
+        });
     }
 
     // 从棋谱名称中提取系列名称
     extractSeriesName(title) {
+        if (!title) return '其他棋谱';
+        
         // 移除数字和特殊字符
         let cleanTitle = title.replace(/[\d\s\-_]+/g, ' ').trim();
         
         // 常见象棋开局和布局关键词
         const openingKeywords = [
             '中炮', '屏风马', '顺炮', '列炮', '飞相', '仙人指路', '过宫炮',
-            '反宫马', '单提马', '士角炮', '起马局', '进兵局', '对兵局'
+            '反宫马', '单提马', '士角炮', '起马局', '进兵局', '对兵局',
+            '五七炮', '五八炮', '五六炮', '巡河炮', '过河炮', '夹马炮',
+            '横车', '直车', '巡河车', '过河车', '贴身车'
         ];
         
         // 查找包含的关键词
@@ -1322,11 +1373,42 @@ class XiangqiGame {
             }
         }
         
-        // 如果没有匹配的关键词，取前2-4个字符作为系列名
-        if (cleanTitle.length <= 4) {
-            return cleanTitle + '系列';
+        // 选手名称系列
+        const playerNames = [
+            '胡荣华', '许银川', '吕钦', '王天一', '郑惟桐', '赵鑫鑫',
+            '蒋川', '洪智', '谢靖', '孙勇征', '徐超', '汪洋'
+        ];
+        
+        for (const player of playerNames) {
+            if (cleanTitle.includes(player)) {
+                return player + '对局';
+            }
+        }
+        
+        // 赛事系列
+        const eventKeywords = [
+            '全国象棋', '个人赛', '团体赛', '甲级联赛', '大师赛', '冠军赛',
+            '锦标赛', '杯赛', '邀请赛', '挑战赛'
+        ];
+        
+        for (const event of eventKeywords) {
+            if (cleanTitle.includes(event)) {
+                return event + '精选';
+            }
+        }
+        
+        // 如果没有匹配的关键词，取前3-6个字符作为系列名
+        if (cleanTitle.length <= 3) {
+            return cleanTitle;
+        } else if (cleanTitle.length <= 6) {
+            return cleanTitle;
         } else {
-            return cleanTitle.substring(0, 4) + '...';
+            // 尝试按常见分隔符分割
+            const segments = cleanTitle.split(/[·\-_]/);
+            if (segments.length > 1 && segments[0].length >= 2) {
+                return segments[0];
+            }
+            return cleanTitle.substring(0, 6) + '...';
         }
     }
 
@@ -1385,6 +1467,35 @@ class XiangqiGame {
                 seriesTitle.textContent = `${series.name} (${series.count}局)`;
             }
             
+            // 显示系列统计信息
+            const seriesInfo = seriesDisplay.querySelector('#seriesInfo');
+            if (seriesInfo) {
+                // 计算系列的平均质量分数
+                const totalScore = series.games.reduce((sum, game) => 
+                    sum + (game.qualityScore || game.classification?.score || 0), 0);
+                const avgScore = series.games.length > 0 ? (totalScore / series.games.length).toFixed(1) : 0;
+                
+                // 计算各种结果的统计
+                const results = {};
+                series.games.forEach(game => {
+                    const result = game.result || '未知';
+                    results[result] = (results[result] || 0) + 1;
+                });
+                
+                const resultText = Object.entries(results)
+                    .map(([result, count]) => `${result}: ${count}局`)
+                    .join(', ');
+                
+                seriesInfo.innerHTML = `
+                    <div style="color: #87ceeb; margin-bottom: 10px;">
+                        平均质量: ${avgScore}分 | ${resultText}
+                    </div>
+                    <div style="color: #98fb98; font-size: 0.9em;">
+                        共 ${series.games.length} 局棋谱，点击查看详情
+                    </div>
+                `;
+            }
+            
             // 显示系列中的棋谱列表
             const seriesGamesList = seriesDisplay.querySelector('#seriesGamesList');
             if (seriesGamesList) {
@@ -1396,17 +1507,26 @@ class XiangqiGame {
                     
                     // 构建棋谱信息
                     const playersInfo = game.players ? 
-                        `${game.players.red || '未知'} vs ${game.players.black || '未知'}` : 
+                        `${game.players.red || '未知红方'} vs ${game.players.black || '未知黑方'}` : 
                         '选手信息未知';
                     
-                    const resultInfo = game.result ? `结果: ${game.result}` : '';
+                    const resultInfo = game.result ? `结果: ${game.result}` : '结果: 未知';
                     const eventInfo = game.event ? `赛事: ${game.event}` : '';
+                    const dateInfo = game.date ? `日期: ${game.date}` : '';
+                    const qualityScore = game.qualityScore || game.classification?.score || 0;
+                    const qualityLevel = game.classification?.levelText || '基础级';
                     
                     gameItem.innerHTML = `
-                        <div class="game-title">${game.title || `棋谱 ${index + 1}`}</div>
+                        <div class="game-title">
+                            ${game.title || `棋谱 ${index + 1}`}
+                            <span class="game-quality" style="background: ${this.getQualityColor(qualityScore)}">
+                                ${qualityLevel}
+                            </span>
+                        </div>
                         <div class="game-info">${playersInfo}</div>
-                        <div class="game-meta">${resultInfo} ${eventInfo}</div>
-                        <div class="game-moves">步数: ${game.moves ? game.moves.length : 0}</div>
+                        <div class="game-meta">${resultInfo}</div>
+                        <div class="game-meta">${eventInfo} ${dateInfo}</div>
+                        <div class="game-moves">步数: ${game.moves ? game.moves.length : 0} | 质量: ${qualityScore}分</div>
                     `;
                     
                     gameItem.addEventListener('click', () => {
@@ -1426,6 +1546,16 @@ class XiangqiGame {
                 };
             }
         }
+    }
+
+    // 根据质量分数获取颜色
+    getQualityColor(score) {
+        if (score >= 75) return '#9C27B0'; // 精品级 - 紫色
+        if (score >= 60) return '#E91E63'; // 专家级 - 粉色
+        if (score >= 45) return '#FF5722'; // 高级 - 橙色
+        if (score >= 30) return '#FF9800'; // 中级 - 黄色
+        if (score >= 20) return '#8BC34A'; // 基础级 - 绿色
+        return '#4CAF50'; // 入门级 - 浅绿
     }
 
     // 从系列中加载具体棋谱
