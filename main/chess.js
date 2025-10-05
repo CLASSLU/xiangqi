@@ -1227,7 +1227,9 @@ class XiangqiGame {
                 'data/qipu-games/leveled_complete_database.json',
                 '../scraper/complete-database/game_compatible_games.json',
                 './data/qipu-games/game_compatible_games.json',
-                './data/qipu-games/complete_database_all.json'
+                './data/qipu-games/complete_database_all.json',
+                '../scraper/game_compatible_games.json',
+                './game_compatible_games.json'
             ];
             
             let scrapedGames = null;
@@ -1241,13 +1243,15 @@ class XiangqiGame {
                         const data = await response.json();
                         scrapedGames = data;
                         loadedPath = path;
-                        console.log(`成功加载棋谱文件: ${path}`, `数据量: ${Object.keys(data).length || data.games?.length || '未知'}`);
+                        console.log(`✅ 成功加载棋谱文件: ${path}`);
+                        console.log(`   数据格式:`, Array.isArray(data) ? '数组' : typeof data);
+                        console.log(`   数据量:`, Array.isArray(data) ? data.length : Object.keys(data).length);
                         break;
                     } else {
-                        console.log(`文件 ${path} 不存在或无法访问: ${response.status}`);
+                        console.log(`   ❌ 文件 ${path} 不存在或无法访问: ${response.status}`);
                     }
                 } catch (error) {
-                    console.log(`加载 ${path} 失败:`, error.message);
+                    console.log(`   ❌ 加载 ${path} 失败:`, error.message);
                     continue;
                 }
             }
@@ -1268,6 +1272,7 @@ class XiangqiGame {
             
         } catch (error) {
             console.error('加载爬取棋谱系列失败:', error);
+            console.error('错误详情:', error);
             // 出错时显示示例数据
             this.displayGameSeries(this.createSampleSeriesData());
         }

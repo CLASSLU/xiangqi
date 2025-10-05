@@ -789,46 +789,61 @@ class CompleteGameScraper {
     convertToGameFormat(games) {
         const gameFormat = {};
         
+        console.log(`开始转换 ${games.length} 个棋谱为游戏格式...`);
+        
         games.forEach((game, index) => {
-            if (game.moves && game.moves.length > 0) {
-                // 使用原始标题作为键，确保名称唯一性
-                const gameName = game.title || `爬取棋谱${index + 1}`;
-                const uniqueName = this.makeUniqueName(gameFormat, gameName, index);
-                
-                // 将棋谱转换为游戏可用的格式
-                const convertedMoves = this.convertMovesToGameFormat(game.moves);
-                
-                if (convertedMoves.length > 0) {
-                    gameFormat[uniqueName] = {
-                        moves: convertedMoves,
-                        originalTitle: game.title,
-                        players: {
-                            red: game.playerRed || '未知红方',
-                            black: game.playerBlack || '未知黑方'
-                        },
-                        result: game.result || '未知结果',
-                        event: game.event || '未知赛事',
-                        date: game.date || new Date().toISOString().split('T')[0],
-                        classification: game.classification || {
-                            level: 'basic',
-                            levelText: '基础级',
-                            description: '爬取棋谱',
-                            color: '#4CAF50',
-                            score: 20,
-                            factors: ['爬取数据'],
-                            recommendation: '建议学习',
-                            difficulty: 'beginner'
-                        },
-                        source: game.source || 'scraper',
-                        moveCount: game.moves.length,
-                        // 添加用于分组的字段
-                        seriesName: this.extractSeriesName(game.title),
-                        qualityScore: game.classification?.score || 20
-                    };
+            try {
+                if (game.moves && game.moves.length > 0) {
+                    // 使用原始标题作为键，确保名称唯一性
+                    const gameName = game.title || `爬取棋谱${index + 1}`;
+                    const uniqueName = this.makeUniqueName(gameFormat, gameName, index);
+                    
+                    // 将棋谱转换为游戏可用的格式
+                    const convertedMoves = this.convertMovesToGameFormat(game.moves);
+                    
+                    if (convertedMoves.length > 0) {
+                        gameFormat[uniqueName] = {
+                            moves: convertedMoves,
+                            originalTitle: game.title,
+                            players: {
+                                red: game.playerRed || '未知红方',
+                                black: game.playerBlack || '未知黑方'
+                            },
+                            result: game.result || '未知结果',
+                            event: game.event || '未知赛事',
+                            date: game.date || new Date().toISOString().split('T')[0],
+                            classification: game.classification || {
+                                level: 'basic',
+                                levelText: '基础级',
+                                description: '爬取棋谱',
+                                color: '#4CAF50',
+                                score: 20,
+                                factors: ['爬取数据'],
+                                recommendation: '建议学习',
+                                difficulty: 'beginner'
+                            },
+                            source: game.source || 'scraper',
+                            moveCount: game.moves.length,
+                            // 添加用于分组的字段
+                            seriesName: this.extractSeriesName(game.title),
+                            qualityScore: game.classification?.score || 20
+                        };
+                        
+                        if (index % 100 === 0) {
+                            console.log(`已转换 ${index + 1}/${games.length} 个棋谱`);
+                        }
+                    } else {
+                        console.log(`棋谱 ${gameName} 转换后无有效移动，跳过`);
+                    }
+                } else {
+                    console.log(`棋谱 ${game.title || `索引${index}`} 无移动数据，跳过`);
                 }
+            } catch (error) {
+                console.error(`转换棋谱 ${game.title || `索引${index}`} 时出错:`, error.message);
             }
         });
         
+        console.log(`棋谱转换完成，有效棋谱: ${Object.keys(gameFormat).length} 个`);
         return gameFormat;
     }
 
