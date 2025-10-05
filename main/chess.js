@@ -1225,22 +1225,29 @@ class XiangqiGame {
                 'data/qipu-games/game_compatible_games.json',
                 'data/qipu-games/complete_database_all.json',
                 'data/qipu-games/leveled_complete_database.json',
-                '../scraper/complete-database/game_compatible_games.json'
+                '../scraper/complete-database/game_compatible_games.json',
+                './data/qipu-games/game_compatible_games.json',
+                './data/qipu-games/complete_database_all.json'
             ];
             
             let scrapedGames = null;
+            let loadedPath = '';
             
             for (const path of possiblePaths) {
                 try {
+                    console.log(`尝试加载棋谱文件: ${path}`);
                     const response = await fetch(path);
                     if (response.ok) {
                         const data = await response.json();
                         scrapedGames = data;
-                        console.log(`成功加载棋谱文件: ${path}`, data);
+                        loadedPath = path;
+                        console.log(`成功加载棋谱文件: ${path}`, `数据量: ${Object.keys(data).length || data.games?.length || '未知'}`);
                         break;
+                    } else {
+                        console.log(`文件 ${path} 不存在或无法访问: ${response.status}`);
                     }
                 } catch (error) {
-                    console.log(`无法加载 ${path}:`, error.message);
+                    console.log(`加载 ${path} 失败:`, error.message);
                     continue;
                 }
             }
@@ -1254,6 +1261,7 @@ class XiangqiGame {
             
             // 处理棋谱数据，按系列分组
             const gameSeries = this.groupGamesIntoSeries(scrapedGames);
+            console.log(`成功分组 ${gameSeries.length} 个系列`);
             
             // 显示棋谱系列
             this.displayGameSeries(gameSeries);
@@ -1293,10 +1301,16 @@ class XiangqiGame {
         
         // 处理不同的数据格式
         let games = [];
-        if (scrapedGames.games) {
+        if (Array.isArray(scrapedGames)) {
+            // 如果是数组格式
+            games = scrapedGames.map(game => ({
+                title: game.title || game.originalTitle || '未知棋谱',
+                ...game
+            }));
+        } else if (scrapedGames.games && Array.isArray(scrapedGames.games)) {
             // complete_database_all.json 格式 - 数组格式
             games = scrapedGames.games.map(game => ({
-                title: game.title || '未知棋谱',
+                title: game.title || game.originalTitle || '未知棋谱',
                 ...game
             }));
         } else {
@@ -1415,7 +1429,12 @@ class XiangqiGame {
     // 显示棋谱系列
     displayGameSeries(seriesArray) {
         const recordButtons = document.getElementById('recordButtons');
-        if (!recordButtons) return;
+        if (!recordButtons) {
+            console.error('未找到棋谱按钮容器');
+            return;
+        }
+        
+        console.log(`显示 ${seriesArray.length} 个棋谱系列`);
         
         // 清空现有按钮（保留经典棋谱部分）
         const classicCategories = recordButtons.querySelectorAll('.record-category');
@@ -1442,6 +1461,7 @@ class XiangqiGame {
                 `;
                 
                 seriesButton.addEventListener('click', () => {
+                    console.log(`点击系列: ${series.name}, 包含 ${series.count} 个棋谱`);
                     this.showSeriesGames(series);
                 });
                 
@@ -1449,6 +1469,12 @@ class XiangqiGame {
             });
             
             recordButtons.appendChild(scrapedCategory);
+        } else {
+            console.log('没有找到棋谱系列数据');
+            const noDataMsg = document.createElement('div');
+            noDataMsg.className = 'record-category';
+            noDataMsg.innerHTML = '<h4>爬取棋谱系列</h4><p style="color: #666; padding: 10px;">暂无棋谱数据，请先运行爬虫程序</p>';
+            recordButtons.appendChild(noDataMsg);
         }
     }
 
