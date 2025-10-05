@@ -120,9 +120,11 @@ describe('吃子和将军检测测试', () => {
     
     // 重置游戏状态
     game.gameOver = false;
-    
-    // 只放置一个黑方将
-    redKing.parentNode.removeChild(redKing);
+
+    // 清空棋盘放置黑方将
+    game.pieces.forEach(piece => {
+      if (piece.parentNode) piece.parentNode.removeChild(piece);
+    });
     game.pieces = [];
     
     const blackKingData = { type: 'king', color: 'black', row: 0, col: 4, char: '將' };
