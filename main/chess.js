@@ -1229,7 +1229,8 @@ class XiangqiGame {
                 './data/qipu-games/game_compatible_games.json',
                 './data/qipu-games/complete_database_all.json',
                 '../scraper/game_compatible_games.json',
-                './game_compatible_games.json'
+                './game_compatible_games.json',
+                '../scraper/complete-database/leveled_complete_database.json'
             ];
             
             let scrapedGames = null;

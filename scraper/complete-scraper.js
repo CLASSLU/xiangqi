@@ -739,6 +739,11 @@ class CompleteGameScraper {
     saveCompleteResults(allGames, levelStats) {
         console.log('\n💾 保存完整数据库...');
 
+        // 确保输出目录存在
+        if (!fs.existsSync(this.outputDir)) {
+            fs.mkdirSync(this.outputDir, { recursive: true });
+        }
+
         // 按级别分类保存
         const leveledFile = path.join(this.outputDir, 'leveled_complete_database.json');
         fs.writeFileSync(leveledFile, JSON.stringify({
@@ -774,6 +779,15 @@ class CompleteGameScraper {
         const gameCompatibleData = this.convertToGameFormat(allGames);
         fs.writeFileSync(gameFormatFile, JSON.stringify(gameCompatibleData, null, 2));
 
+        // 同时保存到主游戏目录
+        const mainGameDir = path.join(__dirname, '..', 'main', 'data', 'qipu-games');
+        if (!fs.existsSync(mainGameDir)) {
+            fs.mkdirSync(mainGameDir, { recursive: true });
+        }
+        
+        const mainGameFile = path.join(mainGameDir, 'game_compatible_games.json');
+        fs.writeFileSync(mainGameFile, JSON.stringify(gameCompatibleData, null, 2));
+
         // 生成统计报告
         this.generateStatisticsReport(allGames, levelStats);
 
@@ -781,6 +795,7 @@ class CompleteGameScraper {
         console.log(`   📄 分级数据库: ${leveledFile}`);
         console.log(`   📄 完整数据库: ${completeFile}`);
         console.log(`   🎮 游戏格式: ${gameFormatFile}`);
+        console.log(`   🎮 主游戏目录: ${mainGameFile}`);
     }
 
     /**
