@@ -1,4 +1,5 @@
 // 测试脚本 - 验证爬虫功能
+const fs = require('fs');
 const { CompleteGameScraper } = require('./complete-scraper.js');
 
 async function testScraper() {

@@ -944,10 +944,18 @@ class CompleteGameScraper {
             // 尝试导入棋谱解析器
             let ChessNotationParser;
             try {
+                // 首先尝试从当前目录导入
                 ChessNotationParser = require('./chess-notation-parser.js');
+                console.log('从当前目录加载棋谱解析器成功');
             } catch (e) {
-                // 如果在当前目录找不到，尝试从上级目录导入
-                ChessNotationParser = require('../main/chess-notation-parser.js');
+                try {
+                    // 如果在当前目录找不到，尝试从上级目录导入
+                    ChessNotationParser = require('../main/chess-notation-parser.js');
+                    console.log('从上级目录加载棋谱解析器成功');
+                } catch (e2) {
+                    console.log('无法加载棋谱解析器，将使用备用转换方法');
+                    throw new Error('棋谱解析器不可用');
+                }
             }
             
             const parser = new ChessNotationParser();
@@ -964,6 +972,9 @@ class CompleteGameScraper {
                     move.toPos,
                     move.notation
                 ]);
+            } else {
+                console.log('棋谱解析器返回空结果，使用备用转换方法');
+                throw new Error('解析结果为空');
             }
         } catch (error) {
             console.log('使用棋谱解析器失败，使用备用转换方法:', error.message);

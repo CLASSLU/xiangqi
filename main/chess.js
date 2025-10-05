@@ -1246,6 +1246,14 @@ class XiangqiGame {
                         console.log(`✅ 成功加载棋谱文件: ${path}`);
                         console.log(`   数据格式:`, Array.isArray(data) ? '数组' : typeof data);
                         console.log(`   数据量:`, Array.isArray(data) ? data.length : Object.keys(data).length);
+                        
+                        // 记录前几个棋谱的标题用于调试
+                        if (Array.isArray(data)) {
+                            console.log(`   前3个棋谱标题:`, data.slice(0, 3).map(g => g.title || g.originalTitle || '未知标题'));
+                        } else if (typeof data === 'object') {
+                            const keys = Object.keys(data);
+                            console.log(`   前3个棋谱标题:`, keys.slice(0, 3).map(key => data[key].originalTitle || key));
+                        }
                         break;
                     } else {
                         console.log(`   ❌ 文件 ${path} 不存在或无法访问: ${response.status}`);
