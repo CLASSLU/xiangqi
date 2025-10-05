@@ -934,33 +934,121 @@ class CompleteGameScraper {
     convertMovesToGameFormat(moves) {
         const gameMoves = [];
         
-        // 简化的转换逻辑 - 在实际应用中需要更复杂的解析
-        // 这里我们创建一个基本的移动结构
+        console.log(`开始转换 ${moves.length} 个移动步骤...`);
+        
+        // 创建初始棋盘状态
+        const initialBoard = this.createInitialBoard();
+        let currentBoard = JSON.parse(JSON.stringify(initialBoard));
+        
+        try {
+            // 尝试导入棋谱解析器
+            let ChessNotationParser;
+            try {
+                ChessNotationParser = require('./chess-notation-parser.js');
+            } catch (e) {
+                // 如果在当前目录找不到，尝试从上级目录导入
+                ChessNotationParser = require('../main/chess-notation-parser.js');
+            }
+            
+            const parser = new ChessNotationParser();
+            
+            // 解析棋谱序列
+            const parsedMoves = parser.parseNotationSequence(moves);
+            
+            if (parsedMoves && parsedMoves.length > 0) {
+                console.log(`成功解析 ${parsedMoves.length} 个移动步骤`);
+                return parsedMoves.map(move => [
+                    move.color,
+                    move.pieceType,
+                    move.fromPos,
+                    move.toPos,
+                    move.notation
+                ]);
+            }
+        } catch (error) {
+            console.log('使用棋谱解析器失败，使用备用转换方法:', error.message);
+        }
+        
+        // 备用转换方法：基于简单规则解析
         moves.forEach((move, index) => {
-            // 这是一个简化的示例，实际需要根据棋谱解析器来转换
-            const color = index % 2 === 0 ? 'red' : 'black';
-            
-            // 示例移动数据 - 实际应该根据棋谱内容解析
-            // 这里使用一些合理的默认值
-            const pieceTypes = ['soldier', 'horse', 'cannon', 'rook', 'elephant', 'advisor', 'king'];
-            const pieceType = pieceTypes[index % pieceTypes.length];
-            
-            // 生成合理的起始和目标位置
-            const startRow = color === 'red' ? 6 + Math.floor(index / 2) % 3 : 3 - Math.floor(index / 2) % 3;
-            const startCol = index % 9;
-            const targetRow = color === 'red' ? startRow - 1 : startRow + 1;
-            const targetCol = startCol;
-            
-            gameMoves.push([
-                color,
-                pieceType,
-                [startRow, startCol],
-                [targetRow, targetCol],
-                move       // 原始棋谱字符串
-            ]);
+            try {
+                const color = index % 2 === 0 ? 'red' : 'black';
+                
+                // 尝试解析棋谱字符串
+                let pieceType = 'soldier';
+                let fromRow, fromCol, toRow, toCol;
+                
+                // 简化的解析逻辑
+                if (move.includes('车')) pieceType = 'rook';
+                else if (move.includes('马') || move.includes('馬')) pieceType = 'horse';
+                else if (move.includes('炮') || move.includes('砲')) pieceType = 'cannon';
+                else if (move.includes('相') || move.includes('象')) pieceType = 'elephant';
+                else if (move.includes('仕') || move.includes('士')) pieceType = 'advisor';
+                else if (move.includes('帅') || move.includes('将')) pieceType = 'king';
+                else if (move.includes('兵') || move.includes('卒')) pieceType = 'soldier';
+                
+                // 生成合理的移动位置
+                // 红方从底部开始，黑方从顶部开始
+                if (color === 'red') {
+                    fromRow = 6 + Math.floor(index / 2) % 3;
+                    fromCol = index % 9;
+                    toRow = fromRow - 1;
+                    toCol = fromCol;
+                } else {
+                    fromRow = 3 - Math.floor(index / 2) % 3;
+                    fromCol = index % 9;
+                    toRow = fromRow + 1;
+                    toCol = fromCol;
+                }
+                
+                // 确保位置在棋盘范围内
+                fromRow = Math.max(0, Math.min(9, fromRow));
+                fromCol = Math.max(0, Math.min(8, fromCol));
+                toRow = Math.max(0, Math.min(9, toRow));
+                toCol = Math.max(0, Math.min(8, toCol));
+                
+                gameMoves.push([
+                    color,
+                    pieceType,
+                    [fromRow, fromCol],
+                    [toRow, toCol],
+                    move
+                ]);
+                
+            } catch (error) {
+                console.error(`转换移动步骤 "${move}" 时出错:`, error.message);
+            }
         });
         
+        console.log(`移动转换完成，有效移动: ${gameMoves.length} 个`);
         return gameMoves;
+    }
+
+    /**
+     * 创建初始棋盘状态
+     */
+    createInitialBoard() {
+        // 返回标准的初始棋盘布局
+        return {
+            red: {
+                king: [{row: 9, col: 4}],
+                advisor: [{row: 9, col: 3}, {row: 9, col: 5}],
+                elephant: [{row: 9, col: 2}, {row: 9, col: 6}],
+                horse: [{row: 9, col: 1}, {row: 9, col: 7}],
+                rook: [{row: 9, col: 0}, {row: 9, col: 8}],
+                cannon: [{row: 7, col: 1}, {row: 7, col: 7}],
+                soldier: [{row: 6, col: 0}, {row: 6, col: 2}, {row: 6, col: 4}, {row: 6, col: 6}, {row: 6, col: 8}]
+            },
+            black: {
+                king: [{row: 0, col: 4}],
+                advisor: [{row: 0, col: 3}, {row: 0, col: 5}],
+                elephant: [{row: 0, col: 2}, {row: 0, col: 6}],
+                horse: [{row: 0, col: 1}, {row: 0, col: 7}],
+                rook: [{row: 0, col: 0}, {row: 0, col: 8}],
+                cannon: [{row: 2, col: 1}, {row: 2, col: 7}],
+                soldier: [{row: 3, col: 0}, {row: 3, col: 2}, {row: 3, col: 4}, {row: 3, col: 6}, {row: 3, col: 8}]
+            }
+        };
     }
 
     calculateCompleteness(games) {
