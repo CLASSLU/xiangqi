@@ -737,65 +737,14 @@ class CompleteGameScraper {
     }
 
     saveCompleteResults(allGames, levelStats) {
-        console.log('\n💾 保存完整数据库...');
-
-        // 确保输出目录存在
-        if (!fs.existsSync(this.outputDir)) {
-            fs.mkdirSync(this.outputDir, { recursive: true });
+        console.log('\n💾 Saving a test file to verify permissions...');
+        const testFile = path.join(this.outputDir, 'test_save.json');
+        try {
+            fs.writeFileSync(testFile, JSON.stringify({ test: 'success', games: allGames.length }, null, 2));
+            console.log(`   ✅ Test file saved successfully to: ${testFile}`);
+        } catch (error) {
+            console.error(`   ❌ Failed to save test file: ${error.message}`);
         }
-
-        // 按级别分类保存
-        const leveledFile = path.join(this.outputDir, 'leveled_complete_database.json');
-        fs.writeFileSync(leveledFile, JSON.stringify({
-            meta: {
-                total: allGames.length,
-                success_rate: (this.successCount / (this.successCount + this.failedCount)).toFixed(4),
-                total_time: Math.floor((Date.now() - this.startTime) / 1000),
-                generated: new Date().toISOString()
-            },
-            levels: this.categories,
-            statistics: levelStats
-        }, null, 2));
-
-        // 完整数据库
-        const completeFile = path.join(this.outputDir, 'complete_database_all.json');
-        fs.writeFileSync(completeFile, JSON.stringify({
-            games: allGames,
-            summary: {
-                total: allGames.length,
-                success: this.successCount,
-                failed: this.failedCount,
-                by_level: levelStats
-            },
-            metadata: {
-                scrape_time: Math.floor((Date.now() - this.startTime) / 1000),
-                strategies_used: ['main_list', 'archive', 'categories'],
-                data_completeness: this.calculateCompleteness(allGames)
-            }
-        }, null, 2));
-
-        // 保存游戏兼容格式，包含原始名称
-        const gameFormatFile = path.join(this.outputDir, 'game_compatible_games.json');
-        const gameCompatibleData = this.convertToGameFormat(allGames);
-        fs.writeFileSync(gameFormatFile, JSON.stringify(gameCompatibleData, null, 2));
-
-        // 同时保存到主游戏目录
-        const mainGameDir = path.join(__dirname, '..', 'main', 'data', 'qipu-games');
-        if (!fs.existsSync(mainGameDir)) {
-            fs.mkdirSync(mainGameDir, { recursive: true });
-        }
-        
-        const mainGameFile = path.join(mainGameDir, 'game_compatible_games.json');
-        fs.writeFileSync(mainGameFile, JSON.stringify(gameCompatibleData, null, 2));
-
-        // 生成统计报告
-        this.generateStatisticsReport(allGames, levelStats);
-
-        console.log(`\n✅ 数据库保存完成:`);
-        console.log(`   📄 分级数据库: ${leveledFile}`);
-        console.log(`   📄 完整数据库: ${completeFile}`);
-        console.log(`   🎮 游戏格式: ${gameFormatFile}`);
-        console.log(`   🎮 主游戏目录: ${mainGameFile}`);
     }
 
     /**
@@ -1169,7 +1118,7 @@ async function main() {
     const scraper = new CompleteGameScraper();
 
     try {
-        const allGames = await scraper.collectAllCompleteGames(800);
+        const allGames = await scraper.collectAllCompleteGames(5);
 
         console.log('\n🎉=== 采集全面成功！===🎉');
         console.log(`\n✅ 最终交付:`);

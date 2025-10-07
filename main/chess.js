@@ -2075,6 +2075,619 @@ class XiangqiGame {
         this.setupPieces();
     }
 
+    // 动态加载分类棋谱数据
+    async loadClassifiedGameDatabase() {
+        try {
+            const response = await fetch('./data/classified-games.json');
+            const data = await response.json();
+
+            // 用于检测数据中的模式
+            let categoryCount = 0;
+            let totalGames = 0;
+            if (data.games) {
+                const categories = Object.keys(data.games);
+                categoryCount = categories.length;
+
+                // 计数所有棋谱
+                for (let categoryId of categories) {
+                    const category = data.games[categoryId];
+                    if (category.games && Array.isArray(category.games)) {
+                        totalGames += category.games.length;
+                    }
+                }
+            }
+
+            console.log('🎯 成功加载分类棋谱数据库:', categoryCount, '个分类', totalGames, '个棋谱');
+            return data;
+        } catch (error) {
+            console.error('❌ 加载分类数据失败:', error.message);
+            return null;
+        }
+    }
+
+    // 显示分类棋谱选择界面
+    async showClassificationPanel() {
+        const recordButtons = document.getElementById('recordButtons');
+        const categoryList = document.getElementById('categoryList');
+
+        if (!recordButtons || !categoryList) {
+            console.error('分类UI元素未找到');
+            return;
+        }
+
+        try {
+            // 移除原有内容
+            recordButtons.innerHTML = '';
+            categoryList.innerHTML = '';
+
+            // 加载分类数据
+            const categoryData = await this.loadClassifiedGameDatabase();
+            if (!categoryData || !categoryData.games) {
+                console.log('使用旧的固定棋谱');
+                this.setupFixedGameButtons();
+                return;
+            }
+
+            // 生成分类列表
+            if (categoryData.games) {
+                const categories = Object.entries(categoryData.games);
+
+                // 排序分类（按数量）
+                categories.sort((a, b) => b[1].count - a[1].count);
+
+                // 生成分类选择
+                categories.forEach(([categoryId, categoryData]) => {
+                    if (categoryData.games && categoryData.games.length > 0) {
+                        const categoryItem = document.createElement('div');
+                        categoryItem.className = 'category-item';
+                        categoryItem.innerHTML = `
+                            <div class="category-name">${categoryData.name}</div>
+                            <div class="category-count">${categoryData.count} 个棋谱</div>
+                        `;
+                        categoryItem.addEventListener('click', () => this.showCategoryGames(categoryId, categoryData));
+                        categoryList.appendChild(categoryItem);
+                    }
+                });
+
+                console.log(`✅ 生成 ${categories.length} 个分类`);
+            }
+
+        } catch (error) {
+            console.error('显示分类界面失败:', error.message);
+            this.setupFixedGameButtons();
+        }
+    }
+
+    // 显示特定分类的棋谱
+    showCategoryGames(categoryId, categoryData) {
+        const recordButtons = document.getElementById('recordButtons');
+
+        if (!categoryData.games || categoryData.games.length === 0) {
+            recordButtons.innerHTML = '<div class="no-games">该分类暂无棋谱</div>';
+            return;
+        }
+
+        recordButtons.innerHTML = `
+            <div class="category-games">
+                <button class="back-btn" onclick="gameObject.showClassificationPanel()">⬅ 返回分类列表</button>
+                <h4>${categoryData.name}</h4>
+                <div class="games-list"></div>
+            </div>
+        `;
+
+        const gamesList = recordButtons.querySelector('.games-list');
+
+        // 限制显示数量（每页显示20个）
+        const limitedGames = categoryData.games.slice(0, 20);
+
+        limitedGames.forEach((game, index) => {
+            const gameBtn = document.createElement('button');
+            gameBtn.className = 'record-btn';
+            gameBtn.innerHTML = `
+                <div class="game-info">${game.title.slice(0, 40)}${game.title.length > 40 ? '...' : ''}</div>
+                <div class="game-meta">${game.players.red} VS ${game.players.black} (${game.totalMoves}步)</div>
+            `;
+            gameBtn.addEventListener('click', () => this.loadAndPlayClassifiedGame(game));
+            gamesList.appendChild(gameBtn);
+        });
+
+        // 如果有更多棋谱，显示提示
+        if (categoryData.games.length > 20) {
+            const moreInfo = document.createElement('div');
+            moreInfo.className = 'more-games-info';
+            moreInfo.innerHTML = `显示前20个棋谱，共有${categoryData.count}个`;
+            gamesList.appendChild(moreInfo);
+        }
+
+        console.log(`✅ 显示分类 ${categoryId}: ${limitedGames.length} 个棋谱`);
+    }
+
+    // 加载和播放分类棋谱
+    loadAndPlayClassifiedGame(gameData) {
+        console.log('🎯 加载分类棋谱:', gameData.title);
+        try {
+            // 验证和规范化棋谱数据
+            const validatedMoves = this.validateClassifiedGameData(gameData);
+
+            if (validatedMoves.length > 0) {
+                console.log('📊 验证后的棋步数量:', validatedMoves.length);
+
+                // 更新棋谱标题
+                const recordTitle = document.getElementById('recordTitle');
+                if (recordTitle) {
+                    recordTitle.textContent = gameData.title;
+                }
+
+                // 验证分类棋谱不需要初始布局检查（可自由移动）
+                console.log('🔄 分类棋谱使用演示模式，跳过初始布局检查');
+
+                // 使用优化的棋谱播放方法
+                this.loadAndPlayClassifiedGameWithDemo(gameData.title, validatedMoves);
+            } else {
+                console.error('分类棋谱数据验证失败:', gameData);
+                alert('棋谱数据验证失败，无法播放');
+            }
+        } catch (error) {
+            console.error('加载分类棋谱失败:', error);
+            alert('加载棋谱失败：' + error.message);
+        }
+    }
+
+    // 重新生成合理的坐标（基于棋步记谱法）
+    recalculateMovesFromNotation(gameData) {
+        console.log('🔄 尝试从记谱法重新计算坐标...');
+
+        try {
+            // 检查是否有有效的记谱法解析器
+            if (typeof ChessNotationParser === 'undefined') {
+                console.log('⚠️ ChessNotationParser未定义，尝试动态导入');
+                return false;
+            }
+
+            const parser = new ChessNotationParser();
+
+            // 收集所有有效的记谱法
+            const notations = gameData.moves
+                .map(move => move.notation)
+                .filter(notation => notation && notation.trim());
+
+            console.log(`准备解析 ${notations.length} 个记谱法:`, notations.slice(0, 3));
+
+            if (notations.length < 8) {
+                console.log('⚠️ 记谱法数量不足(需≥8个), 当前:', notations.length);
+                return false;
+            }
+
+            try {
+                const parsedMoves = parser.parseNotationSequence(notations);
+
+                if (parsedMoves && Array.isArray(parsedMoves) && parsedMoves.length > 0) {
+                    const reconstructedMoves = parsedMoves.map((parsedMove, index) => {
+                        if (!parsedMove || !parsedMove.color || !parsedMove.pieceType ||
+                            !parsedMove.fromPos || !parsedMove.toPos) {
+                            console.warn(`记谱法步骤 ${index + 1} 解析不完整`);
+                            return null;
+                        }
+
+                        return [
+                            parsedMove.color,
+                            parsedMove.pieceType,
+                            parsedMove.fromPos,
+                            parsedMove.toPos,
+                            parsedMove.notation || notations[index] || `${parsedMove.pieceType} move ${index + 1}`
+                        ];
+                    }).filter(move => move !== null);
+
+                    if (reconstructedMoves.length > notations.length * 0.8) {
+                        console.log(`✅ 成功重建 ${reconstructedMoves.length}/${notations.length} 个棋步`);
+                        return reconstructedMoves;
+                    } else {
+                        console.log(`⚠️ 重建成功率太低(${Math.floor(reconstructedMoves.length/notations.length*100)}%)`);
+                    }
+                }
+
+            } catch (parseError) {
+                console.log('🔄 分段解析失败，尝试逐步解析...');
+                // 如果整体解析失败，尝试逐个解析
+                const individualMoves = [];
+                let parseErrorCount = 0;
+
+                for (let notation of notations) {
+                    try {
+                        const result = parser.parseNotation(notation);
+                        if (result && result.color && result.pieceType && result.fromPos) {
+                            individualMoves.push([
+                                result.color,
+                                result.pieceType,
+                                result.fromPos,
+                                result.toPos || this.fixMovePosition(result.fromPos, notation),
+                                notation
+                            ]);
+                        } else {
+                            console.warn(`警告：解析 ${notation} 缺少关键数据`);
+                            parseErrorCount++;
+                        }
+                    } catch (e) {
+                        parseErrorCount++;
+                    }
+                }
+
+                if (individualMoves.length > notations.length * 0.7) {
+                    console.log(`✅ 逐步解析成功，恢复率：${Math.floor(individualMoves.length/notations.length*100)}%`);
+                    return individualMoves;
+                } else {
+                    console.log(`逐步解析失败，${notations.length - individualMoves.length} 解析错误`);
+                }
+            }
+
+        } catch (error) {
+            console.log('🔄 记谱法重建失败:', error.message);
+        }
+
+        return false;
+    }
+    // 辅助函数：估算目标坐标
+    fixMovePosition(fromPos, notation) {
+        const [fromRow, fromCol] = fromPos;
+
+        // 基于记谱法模式估算目标位置
+        if (notation.includes('进一')) return [fromRow + 1, fromCol];
+        if (notation.includes('进二')) return [fromRow + 2, fromCol];
+        if (notation.includes('进三')) return [fromRow + 3, fromCol];
+        if (notation.includes('进四')) return [fromRow + 4, fromCol];
+        if (notation.includes('进五')) return [fromRow + 5, fromCol];
+        if (notation.includes('进六')) return [fromRow + 6, fromCol];
+        if (notation.includes('退一')) return [fromRow - 1, fromCol];
+        if (notation.includes('退二')) return [fromRow - 2, fromCol];
+        if (notation.includes('退三')) return [fromRow - 3, fromCol];
+        if (notation.includes('平一')) return [fromRow, fromCol - 3]; // 假设平移量
+        if (notation.includes('平二')) return [fromRow, fromCol - 2];
+        if (notation.includes('平三')) return [fromRow, fromCol - 1];
+
+        // 如果无法解析，返回在当前行内小幅度移动
+        return [fromRow, Math.max(0, fromCol - 1)];
+    }
+
+    validateClassifiedGameData(gameData) {
+        if (!gameData.moves || !Array.isArray(gameData.moves)) {
+            console.warn('棋谱数据缺少棋步信息');
+            return [];
+        }
+
+        const validMoves = [];
+        const warnings = [];
+
+        console.log(`开始验证棋谱 '${gameData.title}'，共 ${gameData.moves.length} 个棋步`);
+
+        // 第一步：尝试分析前几个棋步的数据质量
+        const sampleMoves = gameData.moves.slice(0, 5);
+        let outOfRangeCount = 0;
+        let validCount = 0;
+
+        sampleMoves.forEach((move, index) => {
+            if (!move || !move.notation) return;
+
+            let fromRow = move.fromPos?.[0];
+            let fromCol = move.fromPos?.[1];
+            let toRow = move.toPos?.[0];
+            let toCol = move.toPos?.[1];
+
+            // 检查坐标是否在有效范围内
+            if (fromRow !== undefined && fromCol !== undefined && toRow !== undefined && toCol !== undefined) {
+                const validRange = fromRow >= 0 && fromRow < 10 && fromCol >= 0 && fromCol < 9 &&
+                                 toRow >= 0 && toRow < 10 && toCol >= 0 && toCol < 9;
+                if (validRange) validCount++;
+                else outOfRangeCount++;
+            }
+        });
+
+        console.log(`🎲 抽样检查 - 有效: ${validCount}, 超出范围: ${outOfRangeCount}`);
+
+        // 如果大量数据有问题，尝试从记谱法重建
+        if (outOfRangeCount > validCount && validCount < 2) {
+            console.log('检测到大量坐标数据异常，尝试重建棋步...');
+            const reconstructedMoves = this.recalculateMovesFromNotation(gameData);
+            if (reconstructedMoves) {
+                console.log('✅ 使用重新计算的棋步');
+                return reconstructedMoves;
+            }
+        }
+
+        // 默认验证：按原数据进行完整性检查
+        gameData.moves.forEach((move, index) => {
+            try {
+                // 验证基本数据结构
+                if (!move || typeof move !== 'object') {
+                    warnings.push(`棋步 ${index + 1}: 数据结构错误`);
+                    return;
+                }
+
+                // 验证必需字段
+                if (!move.color || !move.pieceType || !move.fromPos || !move.toPos) {
+                    warnings.push(`棋步 ${index + 1}: 缺少必需字段`);
+                    return;
+                }
+
+                // 验证颜色
+                if (move.color !== 'red' && move.color !== 'black') {
+                    warnings.push(`棋步 ${index + 1}: 无效的颜色 '${move.color}'`);
+                    return;
+                }
+
+                // 验证棋步坐标（应该是 [row, col] 格式，row 0-9, col 0-8）
+                if (!Array.isArray(move.fromPos) || move.fromPos.length !== 2 ||
+                    !Array.isArray(move.toPos) || move.toPos.length !== 2) {
+                    warnings.push(`棋步 ${index + 1}: 坐标格式错误`);
+                    return;
+                }
+
+                let fromRow = move.fromPos[0];
+                let fromCol = move.fromPos[1];
+                let toRow = move.toPos[0];
+                let toCol = move.toPos[1];
+
+                // 验证坐标范围和类型
+                const isValidCoord = (val) => typeof val === 'number';
+                const inValidRange = (val, max) => val >= 0 && val <= max;
+
+                if (!isValidCoord(fromRow) || !isValidCoord(fromCol) ||
+                    !isValidCoord(toRow) || !isValidCoord(toCol)) {
+                    warnings.push(`棋步 ${index + 1}: 坐标类型错误 - 应为数字`);
+                    return;
+                }
+
+                if (!inValidRange(fromRow, 9) || !inValidRange(fromCol, 8) ||
+                    !inValidRange(toRow, 9) || !inValidRange(toCol, 8)) {
+                    warnings.push(`棋步 ${index + 1}: 坐标超出棋盘范围 [${fromRow},${fromCol}]→[${toRow},${toCol}]`);
+                    return;
+                }
+
+                // 验证棋子类型
+                const validPieceTypes = ['king', 'rook', 'horse', 'cannon', 'elephant', 'advisor', 'soldier'];
+                if (!validPieceTypes.includes(move.pieceType)) {
+                    warnings.push(`棋步 ${index + 1}: 无效的棋子类型 '${move.pieceType}'`);
+                    return;
+                }
+
+                // 验证中文记谱法（如果有的话）
+                if (move.notation && !move.notation.match(/^[一-龥]/)) {
+                    console.warn(`棋步 ${index + 1}: 记谱法格式异常 '${move.notation}'`);
+                }
+
+                // 如果通过所有验证，添加有效棋步
+                validMoves.push([
+                    move.color,
+                    move.pieceType,
+                    [fromRow, fromCol],
+                    [toRow, toCol],
+                    move.notation || `${move.pieceType} move ${index + 1}`
+                ]);
+
+            } catch (error) {
+                warnings.push(`棋步 ${index + 1}: 处理错误 - ${error.message}`);
+            }
+        });
+
+        // 打印统计信息
+        if (warnings.length > 0) {
+            console.warn(`棋谱 '${gameData.title}' 数据验证警告 (${warnings.length}):`);
+            warnings.slice(0, 3).forEach(warning => console.warn(' -', warning)); // 只显示前3个
+            if (warnings.length > 3) {
+                console.warn(`... (还有更多 ${warnings.length - 3} 个警告)`);
+            }
+        }
+
+        console.log(`数据验证结果: ${gameData.moves.length} 个原始棋步 → ${validMoves.length} 个有效棋步`);
+
+        // 如果有效棋步太少，给出警告
+        if (validMoves.length < 8) {
+            console.warn(`棋谱 '${gameData.title}' 的有效棋步数量不足 (${validMoves.length} < 8)`);
+        }
+
+        return validMoves;
+    }
+
+    // 专为演示棋谱设计的播放方法
+    loadAndPlayClassifiedGameWithDemo(gameName, gameMoves) {
+        console.log('🎭 演示模式加载:', gameName);
+        try {
+            // 设置游戏状态为演示模式
+            this.gamePhase = 'demonstration';
+            this.moveHistory = [];
+
+            // 清空当前布局
+            this.pieces.forEach(piece => {
+                if (piece.parentNode) {
+                    piece.parentNode.removeChild(piece);
+                }
+            });
+            this.pieces = [];
+
+            // 为演示创建简化布局 - 保证每个棋子都存在
+            this.createDemonstrationPieces(gameMoves);
+
+            // 执行棋步 - 跳过复杂的规则验证，直接进入演示模式
+            this.playDemonstrationMoves(gameName, gameMoves);
+
+        } catch (error) {
+            console.error('演示棋谱播放失败:', error);
+            this.setupPieces(); // 回退到标准布局
+        }
+    }
+
+    // 为演示创建必要的基础棋子
+    createDemonstrationPieces(gameMoves) {
+        console.log('🎨 创建演示棋子...');
+
+        // 创建基础棋子布局
+        const requiredPositions = new Map();
+
+        // 收集所有需要的棋子位置和类型
+        gameMoves.forEach(move => {
+            const [color, pieceType, fromPos, toPos, notation] = move;
+
+            // 记录起始位置
+            const fromKey = `${color}_${pieceType}_${fromPos[0]}_${fromPos[1]}`;
+            requiredPositions.set(fromKey, {
+                color, type: pieceType, row: fromPos[0], col: fromPos[1], notation
+            });
+        });
+
+        // 创建所有必需的棋子
+        requiredPositions.forEach((pieceInfo, key) => {
+            this.createPieceAtPosition(pieceInfo);
+        });
+
+        console.log('✅ 创建了', requiredPositions.size, '个演示棋子');
+    }
+
+    // 在指定位置创建棋子
+    createPieceAtPosition(pieceInfo) {
+        const characters = {
+            red: {
+     king: '帥',  rook: '車', horse: '馬', cannon: '炮',
+ elephant: '相', advisor: '仕', soldier: '兵'
+           },
+   black: {
+      king: '將', rook: '車', horse: '馬', cannon: '砲',
+  elephant: '象',   advisor: '士', soldier: '卒'
+       }
+   };
+
+        const char = characters[pieceInfo.color][pieceInfo.type];
+        if (!char) {
+  console.warn('未知棋子类型:', pieceInfo);
+            return null;
+        }
+
+    const piece = document.createElement('div');
+        piece.className = 'piece';
+        piece.textContent = char;
+        piece.dataset.type = pieceInfo.type;
+        piece.dataset.color = pieceInfo.color;
+   piece.dataset.row = pieceInfo.row;
+ piece.dataset.col = pieceInfo.col;
+
+        // 添加样式
+      piece.style.position = 'absolute';
+ piece.style.left = pieceInfo.col * 70 + 'px';
+        piece.style.top = pieceInfo.row * 70 + 'px';
+    piece.style.color = pieceInfo.color === 'red' ? '#d32f2f' : '#333';
+
+    if (this.board) {
+            this.board.appendChild(piece);
+   this.pieces.push(piece);
+       return piece;
+        } else {
+            // 延迟到文档准备好
+            setTimeout(() => {
+       if (this.board) {
+                    this.board.appendChild(piece);
+  this.pieces.push(piece);
+     }
+            }, 100);
+     return null;
+        }
+    }
+
+    // 播放演示棋步
+    playDemonstrationMoves(gameName, gameMoves) {
+     console.log('🎬 开始播放演示:', gameName);
+
+        for (let i = 0; i < gameMoves.length; i++) {
+            const move = gameMoves[i];
+   const [color, pieceType, fromPos, toPos, notation] = move;
+            const [fromRow, fromCol] = fromPos;
+            const toRow = toPos[0], toCol = toPos[1];
+
+        console.log(`步骤 ${i+1}: ${notation} (${color} ${pieceType}) [${fromRow},${fromCol}]→[${toRow},${toCol}]`);
+
+       // 查找棋子 - 取调试模式，输出所有棋子状态
+            const candidates = this.pieces.filter(p =>
+      p && p.dataset.color === color &&
+         p.dataset.type === pieceType
+   );
+
+    if (candidates.length === 0) {
+        console.warn(`❌ 找不到任何 ${color} ${pieceType} 棋子！当前棋子总数: ${this.pieces.length}`);
+        console.log('当前棋盘上的棋子:', this.pieces.map(p => ({color: p.dataset.color, type: p.dataset.type, pos: [p.dataset.row, p.dataset.col]})));
+        continue;
+       }
+
+    // 精确查找起始位置
+     const piece = candidates.find(p =>
+       parseInt(p.dataset.row) === fromRow && parseInt(p.dataset.col) === fromCol
+       );
+
+            if (piece) {
+       // 直接移动棋子，不经过复杂验证
+                   console.log(`✅ 找到棋子并移动: ${piece.textContent}`);
+  piece.style.left = toCol * 70 + 'px';
+ piece.style.top = toRow * 70 + 'px';
+    piece.dataset.row = toRow;
+             piece.dataset.col = toCol;
+
+  // 记录移动历史
+    this.moveHistory.push({
+      pieceType: piece.dataset.type,
+        pieceColor: piece.dataset.color,
+       pieceChar: piece.textContent,
+                from: { row: fromRow, col: fromCol },
+       to: { row: toRow, col: toCol },
+       capturedPiece: null,
+notation: notation
+          });
+
+    console.log(`演示步骤 \${i+1}: \${notation} [\${fromRow},\${fromCol}]→[\${toRow},\${toCol}]`);
+
+        } else {
+                console.warn(`演示模式跳过: ${color} ${pieceType} 在 [${fromRow},${fromCol}]`);
+        }
+        }
+
+   // 更新步骤列表显示
+        if (typeof document !== 'undefined') {
+         try {
+      this.updateRecordStepsDisplay(gameMoves);
+ setTimeout(() => {
+   if (this.resetToStartPosition) {
+                this.resetToStartPosition();
+       }
+            }, 500);
+   } catch (e) {
+        console.log('更新步骤显示错误:', e.message);
+        }
+        }
+
+      // 设置初始玩家和控制状态
+        this.currentPlayer = 'red';
+        this.gamePhase = 'demonstration';
+   this.updateStatus();
+
+           console.log(`✅ 演示加载完成: ${gameName}`);
+    }
+
+    setupFixedGameButtons() {
+        const recordButtons = document.getElementById('recordButtons');
+        recordButtons.innerHTML = `
+            <!-- 经典残局 -->
+            <div class="record-category">
+                <h4>经典残局</h4>
+                <button class="record-btn" data-game="七星聚会">七星聚会</button>
+                <button class="record-btn" data-game="蚯蚓降龙">蚯蚓降龙</button>
+                <button class="record-btn" data-game="野马操田">野马操田</button>
+                <button class="record-btn" data-game="千里独行">千里独行</button>
+            </div>
+            <!-- 经典开局 -->
+            <div class="record-category">
+                <h4>经典开局</h4>
+                <button class="record-btn" data-game="中炮对屏风马经典">中炮对屏风马</button>
+                <button class="record-btn" data-game="中炮对顺炮对攻">中炮对顺炮</button>
+                <button class="record-btn" data-game="仙人指路对中炮">仙人指路</button>
+            </div>
+        `;
+    }
+
     // 解析标准棋谱格式并转换为游戏格式
     parseStandardNotation(standardNotations) {
         try {

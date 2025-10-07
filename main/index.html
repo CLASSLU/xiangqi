@@ -173,28 +173,22 @@
             <button id="closeRecords" class="close-btn">×</button>
         </div>
         
+        <!-- 分类导航区域 -->
+        <div class="classification-nav">
+            <button id="categoryToggle" class="category-toggle-btn">📂 分类目录</button>
+            <div id="categorySelection" class="category-selection hidden">
+                <h4>棋谱分类</h4>
+                <div id="categoryList" class="category-list">
+                    <!-- 动态分类列表将在这里生成 -->
+                </div>
+            </div>
+        </div>
+
         <!-- 棋谱选择按钮区域 -->
         <div class="record-selection">
             <h3>选择棋谱：</h3>
             <div id="recordButtons" class="record-buttons">
-                <!-- 经典残局 -->
-                <div class="record-category">
-                    <h4>经典残局</h4>
-                    <button class="record-btn" data-game="七星聚会">七星聚会</button>
-                    <button class="record-btn" data-game="蚯蚓降龙">蚯蚓降龙</button>
-                    <button class="record-btn" data-game="野马操田">野马操田</button>
-                    <button class="record-btn" data-game="千里独行">千里独行</button>
-                </div>
-
-                <!-- 经典开局 -->
-                <div class="record-category">
-                    <h4>经典开局</h4>
-                    <button class="record-btn" data-game="中炮对屏风马经典">中炮对屏风马</button>
-                    <button class="record-btn" data-game="中炮对顺炮对攻">中炮对顺炮</button>
-                    <button class="record-btn" data-game="仙人指路对中炮">仙人指路</button>
-                    <button class="record-btn" data-game="胡荣华名局精选">胡荣华名局</button>
-                    <button class="record-btn" data-game="许银川名局精选">许银川名局</button>
-                </div>
+                <!-- 分类棋谱内容将动态生成 -->
             </div>
         </div>
         
@@ -265,9 +259,26 @@
                 });
             }
 
+            // 分类功能控制
+            const categoryToggle = document.getElementById('categoryToggle');
+   const categorySelection = document.getElementById('categorySelection');
+
+         if (categoryToggle && categorySelection) {
+                // 分类切换按钮事件
+          categoryToggle.addEventListener('click', function() {
+     categorySelection.classList.toggle('hidden');
+      console.log('分类面板切换:', !categorySelection.classList.contains('hidden'));
+
+                // 如果打开分类面板，显示分类棋谱
+       if (!categorySelection.classList.contains('hidden') && window.game) {
+     window.game.showClassificationPanel();
+     }
+        });
+        }
+
             // 棋谱选择按钮
             const recordButtons = document.querySelectorAll('.record-btn');
-            console.log('找到棋谱按钮:', recordButtons.length);
+       console.log('找到棋谱按钮:', recordButtons.length);
 
             recordButtons.forEach(button => {
                 button.addEventListener('click', function() {
@@ -338,7 +349,11 @@
                     console.log('显示棋谱面板');
                     if (window.game && window.game.showRecordPanel) {
                         window.game.showRecordPanel();
-                    } else {
+                        // 显示分类选择
+                        if (window.game.showClassificationPanel) {
+                           window.game.showClassificationPanel();
+                        }
+                  } else {
                         const recordPanel = document.getElementById('recordPanel');
                         if (recordPanel) {
                             recordPanel.classList.remove('hidden');

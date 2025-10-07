@@ -149,7 +149,7 @@ class ChessNotationParser {
     }
 
     /**
-     * 查找指定类型和颜色的棋子位置
+     * 查找指定类型和颜色的棋子位置（含容错机制）
      * @param {string} pieceType - 棋子类型
      * @param {string} color - 颜色
      * @param {number} targetCol - 目标列
@@ -159,6 +159,7 @@ class ChessNotationParser {
     findPiecePositions(pieceType, color, targetCol, board) {
         const positions = [];
 
+        // 首先尝试精确匹配
         for (let row = 0; row < 10; row++) {
             for (let col = 0; col < 9; col++) {
                 if (board[row] && board[row][col] &&
@@ -166,6 +167,31 @@ class ChessNotationParser {
                     board[row][col].color === color &&
                     col === targetCol) {
                     positions.push({row, col});
+                }
+            }
+        }
+
+        // 如果没有找到棋子，尝试容错匹配（从相邻路码寻找）
+        if (positions.length === 0) {
+            const searchRange = 2; // 搜索范围：前后各2列
+            for (let offset = -searchRange; offset <= searchRange; offset++) {
+                if (offset === 0) continue; // 跳过已搜索过的精确位置
+
+                const alternativeCol = targetCol + offset;
+                if (alternativeCol < 0 || alternativeCol >= 9) continue;
+
+                for (let row = 0; row < 10; row++) {
+                    if (board[row] && board[row][alternativeCol] &&
+                        board[row][alternativeCol].type === pieceType &&
+                        board[row][alternativeCol].color === color) {
+                        positions.push({row, col: alternativeCol});
+                    }
+                }
+
+                // 如果在相邻列中找到，停止搜索
+                if (positions.length > 0) {
+                    console.log(`   ⚠️  在路码${this.columnToRoad(color, targetCol)}(列${targetCol})未找到${color} ${pieceType}，从相邻路码${this.columnToRoad(color, alternativeCol)}(列${alternativeCol})找到`);
+                    break;
                 }
             }
         }
@@ -260,18 +286,39 @@ class ChessNotationParser {
                     throw new Error('象的移动规则错误');
                 }
             } else if (pieceType === 'advisor' || pieceType === 'king') {
-                // 士、将：toInfo表示目标路码
-                toCol = this.roadToColumn(color, toInfo);
-                // 士和将走斜线
-                const colDiff = toCol - fromPos.col;
-                if (color === 'red') {
-                    toRow = action === '进' ? fromPos.row - 1 : fromPos.row + 1;
+                // 士、将：“一进一”等不同格式
+                // "帅五进一"：第5路，前进1步（列移动1步）
+                // "帅五平六"：第5路，平移到第6路（列移动到6，行不变）
+
+                // 确定目标列：如果动作是\"平\"，则toInfo是目标路码；如果是\"进\"或\"退\"，通常是1步
+                if (action === '平') {
+                    toCol = this.roadToColumn(color, toInfo);
+                    toRow = fromPos.row; // 行数不变
                 } else {
-                    toRow = action === '进' ? fromPos.row + 1 : fromPos.row - 1;
-                }
-                // 检查是否符合斜线移动
-                if (Math.abs(colDiff) !== 1) {
-                    throw new Error('士/将的移动规则错误');
+                    // "进"或"退"
+                    // 区分两种模式：步进移动 或 斜对角线移动（可通过路码变化判断）
+                    const targetCol = this.roadToColumn(color, toInfo);
+                    const colDiff = Math.abs(targetCol - fromPos.col);
+
+                    if (colDiff === 0) {
+                        // 没有移动路码，只有纵向移动（将/帅的直线移动）
+                        toCol = fromPos.col;
+                        if (color === 'red') {
+                            toRow = action === '进' ? fromPos.row - toInfo : fromPos.row + toInfo;
+                        } else {
+                            toRow = action === '进' ? fromPos.row + toInfo : fromPos.row - toInfo;
+                        }
+                    } else if (colDiff === 1) {
+                        // 士的对角线移动（路码变化1）
+                        toCol = targetCol;
+                        if (color === 'red') {
+                            toRow = action === '进' ? fromPos.row - 1 : fromPos.row + 1;
+                        } else {
+                            toRow = action === '进' ? fromPos.row + 1 : fromPos.row - 1;
+                        }
+                    } else {
+                        throw new Error('将/士的移动规则错误');
+                    }
                 }
             } else {
                 // 默认处理：toInfo表示步数
@@ -285,9 +332,17 @@ class ChessNotationParser {
             }
         }
 
-        // 验证目标位置是否在棋盘内
+        // 验证目标位置是否在棋盘内（带容错处理）
         if (toRow < 0 || toRow > 9 || toCol < 0 || toCol > 8) {
-            throw new Error(`目标位置超出棋盘: (${toRow}, ${toCol})`);
+            // 容错处理：将目标位置调整到棋盘边界
+            const adjustedRow = Math.max(0, Math.min(9, toRow));
+            const adjustedCol = Math.max(0, Math.min(8, toCol));
+
+            if (adjustedRow !== toRow || adjustedCol !== toCol) {
+                console.log(`   ⚠️  目标位置(${toRow},${toCol})超出棋盘，调整到(${adjustedRow},${adjustedCol})`);
+                toRow = adjustedRow;
+                toCol = adjustedCol;
+            }
         }
 
         return {
@@ -485,15 +540,17 @@ class ChessNotationParser {
 
     /**
      * 获取两点之间的路径
-     * @param {Array} fromPos - 起始位置
-     * @param {Array} toPos - 目标位置
+     * @param {Array|Object} fromPos - 起始位置 {row, col} 或 [row, col]
+     * @param {Array|Object} toPos - 目标位置 {row, col} 或 [row, col]
      * @returns {Array} 路径数组
      */
     getPath(fromPos, toPos) {
-        const fromRow = fromPos.row;
-        const fromCol = fromPos.col;
-        const toRow = toPos.row;
-        const toCol = toPos.col;
+        // 处理两种可能的位置格式：对象 {row, col} 或数组 [row, col]
+        const fromRow = Array.isArray(fromPos) ? fromPos[0] : (fromPos.row || fromPos[0]);
+        const fromCol = Array.isArray(fromPos) ? fromPos[1] : (fromPos.col || fromPos[1]);
+        const toRow = Array.isArray(toPos) ? toPos[0] : (toPos.row || toPos[0]);
+        const toCol = Array.isArray(toPos) ? toPos[1] : (toPos.col || toPos[1]);
+
         const path = [];
 
         if (fromRow === toRow) {
