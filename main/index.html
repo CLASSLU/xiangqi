@@ -111,7 +111,17 @@
             background: linear-gradient(135deg, #888, #aaa);
             transform: translateY(-1px);
         }
-        
+
+        .loading-message {
+            text-align: center;
+            color: #87ceeb;
+            font-style: italic;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
         .series-header {
             display: flex;
             justify-content: space-between;
@@ -169,14 +179,13 @@
     <!-- 棋谱展示面板 -->
     <div id="recordPanel" class="record-panel hidden">
         <div class="record-header">
-            <h2>经典棋谱选择</h2>
+            <h2>棋谱分类演示</h2>
             <button id="closeRecords" class="close-btn">×</button>
         </div>
-        
-        <!-- 分类导航区域 -->
+
+        <!-- 分类导航区域（简化版，直接进入分类展示） -->
         <div class="classification-nav">
-            <button id="categoryToggle" class="category-toggle-btn">📂 分类目录</button>
-            <div id="categorySelection" class="category-selection hidden">
+            <div id="categorySelection" class="category-selection">
                 <h4>棋谱分类</h4>
                 <div id="categoryList" class="category-list">
                     <!-- 动态分类列表将在这里生成 -->
@@ -184,8 +193,8 @@
             </div>
         </div>
 
-        <!-- 棋谱选择按钮区域 -->
-        <div class="record-selection">
+        <!-- 棋谱选择按钮区域（隐藏，改为分类界面） -->
+        <div class="record-selection hidden">
             <h3>选择棋谱：</h3>
             <div id="recordButtons" class="record-buttons">
                 <!-- 分类棋谱内容将动态生成 -->
@@ -259,26 +268,18 @@
                 });
             }
 
-            // 分类功能控制
-            const categoryToggle = document.getElementById('categoryToggle');
-   const categorySelection = document.getElementById('categorySelection');
+            // 分类功能控制（已简化，不再需要切换按钮）
+            // 分类功能现在默认显示，无需用户手动切换
+            if (window.game && window.game.showClassificationPanel) {
+                // 页面加载完成后自动显示分类
+                setTimeout(() => {
+                    window.game.showClassificationPanel();
+                }, 100);
+            }
 
-         if (categoryToggle && categorySelection) {
-                // 分类切换按钮事件
-          categoryToggle.addEventListener('click', function() {
-     categorySelection.classList.toggle('hidden');
-      console.log('分类面板切换:', !categorySelection.classList.contains('hidden'));
-
-                // 如果打开分类面板，显示分类棋谱
-       if (!categorySelection.classList.contains('hidden') && window.game) {
-     window.game.showClassificationPanel();
-     }
-        });
-        }
-
-            // 棋谱选择按钮
+            // 棋谱选择按钮（保留事件处理但不再使用固定的经典棋谱）
             const recordButtons = document.querySelectorAll('.record-btn');
-       console.log('找到棋谱按钮:', recordButtons.length);
+            console.log('找到棋谱按钮:', recordButtons.length);
 
             recordButtons.forEach(button => {
                 button.addEventListener('click', function() {
@@ -346,13 +347,9 @@
             const showGameRecordsBtn = document.getElementById('showGameRecords');
             if (showGameRecordsBtn) {
                 showGameRecordsBtn.addEventListener('click', function() {
-                    console.log('显示棋谱面板');
+                    console.log('显示棋谱面板（分类模式）');
                     if (window.game && window.game.showRecordPanel) {
-                        window.game.showRecordPanel();
-                        // 显示分类选择
-                        if (window.game.showClassificationPanel) {
-                           window.game.showClassificationPanel();
-                        }
+                        window.game.showRecordPanel(); // 现在会自动显示分类界面
                   } else {
                         const recordPanel = document.getElementById('recordPanel');
                         if (recordPanel) {

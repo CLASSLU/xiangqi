@@ -1206,12 +1206,12 @@ class XiangqiGame {
             const recordDisplay = document.getElementById('recordDisplay');
             const seriesDisplay = document.getElementById('seriesDisplay');
 
-            if (recordSelection) recordSelection.classList.remove('hidden');
+            if (recordSelection) recordSelection.classList.add('hidden'); // 隐藏经典棋谱选择
             if (recordDisplay) recordDisplay.classList.add('hidden');
             if (seriesDisplay) seriesDisplay.classList.add('hidden');
 
-            // 加载爬取棋谱系列
-            this.loadScrapedGameSeries();
+            // 直接显示分类选择界面
+            this.showClassificationPanel();
         }
     }
 
@@ -1749,22 +1749,13 @@ class XiangqiGame {
             case '仙人指路对中炮':
             case '胡荣华名局精选':
             case '许银川名局精选':
-                // 从 JSON 文件加载经典开局
+                // 经典棋局现在使用分类棋谱数据，不再使用硬编码的经典开局
                 try {
-                    // 如果在浏览器环境中，加载并播放棋谱
-                    if (typeof window !== 'undefined' && window.fetch) {
-                        // 优先使用解析器版本，如果失败则使用原有版本
-                        this.loadAndPlayClassicGameWithParser(name).catch(() => {
-                            this.loadAndPlayClassicGame(name);
-                        });
-                        return; // 已经在 loadAndPlayClassicGame 中处理了
-                    } else {
-                        // 在非浏览器环境中，设置默认棋局布局
-                        this.setupPieces();
-                        return;
-                    }
+                    // 直接显示分类棋谱界面
+                    this.showClassificationPanel();
+                    return;
                 } catch (error) {
-                    console.error('加载经典棋局失败:', error);
+                    console.error('加载分类棋谱失败:', error);
                     this.setupPieces(); // 降级到默认布局
                     return;
                 }
@@ -1785,154 +1776,10 @@ class XiangqiGame {
 
     // 加载并播放经典棋局
     async loadAndPlayClassicGame(gameName) {
-        try {
-            // 直接使用内嵌的经典棋谱数据，避免fetch跨域问题
-            const classicGames = {
-                "中炮对屏风马经典": [
-                    ["red", "cannon", [7, 7], [7, 4], "炮二平五"],
-                    ["black", "horse", [0, 7], [2, 6], "马8进7"],
-                    ["red", "horse", [9, 7], [7, 6], "马二进三"],
-                    ["black", "rook", [0, 8], [0, 7], "车9平8"],
-                    ["red", "rook", [9, 0], [8, 0], "车一进一"],
-                    ["black", "horse", [0, 1], [2, 2], "马2进3"],
-                    ["red", "rook", [8, 0], [8, 5], "车一平六"],
-                    ["black", "soldier", [3, 6], [4, 6], "卒7进1"],
-                    ["red", "soldier", [6, 6], [5, 6], "兵七进一"],
-                    ["black", "cannon", [2, 7], [2, 4], "炮8平5"],
-                    ["red", "horse", [7, 2], [5, 3], "马三进五"],
-                    ["black", "cannon", [2, 4], [0, 4], "炮5退1"],
-                    ["red", "horse", [9, 7], [8, 5], "马八进七"],
-                    ["black", "rook", [0, 7], [1, 7], "车8进1"],
-                    ["red", "advisor", [9, 3], [8, 4], "仕四进五"]
-                ],
-                "中炮对顺炮对攻": [
-                    ["red", "cannon", [7, 1], [7, 4], "炮二平五"],
-                    ["black", "cannon", [2, 7], [2, 4], "炮8平5"],
-                    ["red", "horse", [9, 7], [7, 6], "马二进三"],
-                    ["black", "horse", [0, 7], [2, 6], "马8进7"],
-                    ["red", "rook", [9, 0], [8, 0], "车一进一"],
-                    ["black", "rook", [0, 8], [0, 7], "车9平8"],
-                    ["red", "rook", [8, 0], [8, 5], "车一平六"],
-                    ["black", "rook", [0, 7], [4, 7], "车8进4"],
-                    ["red", "horse", [9, 7], [8, 5], "马八进七"],
-                    ["black", "horse", [0, 1], [2, 2], "马2进3"],
-                    ["red", "cannon", [7, 4], [6, 4], "炮五进四"],
-                    ["black", "advisor", [0, 3], [1, 4], "士4进5"],
-                    ["red", "cannon", [6, 4], [4, 4], "炮五平三"],
-                    ["black", "rook", [4, 7], [3, 7], "车8平7"],
-                    ["red", "rook", [8, 5], [7, 5], "车六平五"]
-                ],
-                "仙人指路对中炮": [
-                    ["red", "soldier", [6, 6], [5, 6], "兵七进一"],
-                    ["black", "cannon", [2, 7], [2, 4], "炮8平5"],
-                    ["red", "cannon", [7, 1], [7, 4], "炮二平五"],
-                    ["black", "horse", [0, 7], [2, 6], "马8进7"],
-                    ["red", "horse", [9, 7], [7, 6], "马二进三"],
-                    ["black", "horse", [0, 1], [2, 2], "马2进3"],
-                    ["red", "rook", [9, 0], [8, 0], "车一进一"],
-                    ["black", "rook", [0, 8], [0, 7], "车9平8"],
-                    ["red", "horse", [9, 7], [8, 5], "马八进七"],
-                    ["black", "elephant", [0, 2], [2, 4], "象3进5"],
-                    ["red", "rook", [8, 0], [8, 4], "车一平五"],
-                    ["black", "rook", [0, 7], [1, 7], "车8进1"],
-                    ["red", "advisor", [9, 3], [8, 4], "仕四进五"],
-                    ["black", "cannon", [2, 4], [0, 4], "炮5退1"],
-                    ["red", "cannon", [7, 4], [7, 5], "炮五进一"]
-                ],
-                "爬取棋谱1": [
-                    ["red", "soldier", [6, 6], [5, 6], "兵七进一"],
-                    ["black", "horse", [0, 1], [2, 6], "马8进7"],
-                    ["red", "soldier", [6, 2], [5, 2], "兵三进一"],
-                    ["black", "soldier", [0, 0], [0, 0], "炮8平9"],
-                    ["red", "horse", [9, 1], [7, 2], "马二进三"]
-                ],
-                "爬取棋谱2": [
-                    ["red", "soldier", [6, 6], [5, 6], "兵七进一"],
-                    ["black", "soldier", [0, 0], [0, 0], "炮2平3"],
-                    ["red", "cannon", [7, 7], [7, 4], "炮二平五"],
-                    ["black", "elephant", [0, 6], [2, 4], "象3进5"],
-                    ["red", "horse", [9, 1], [7, 2], "马二进三"]
-                ],
-                "爬取棋谱3": [
-                    ["red", "soldier", [6, 2], [5, 2], "兵三进一"],
-                    ["black", "soldier", [3, 2], [4, 2], "卒3进一"],
-                    ["red", "horse", [9, 1], [7, 2], "马二进三"],
-                    ["black", "horse", [0, 7], [2, 2], "马2进3"],
-                    ["red", "soldier", [0, 0], [0, 0], "马八进九"]
-                ]
-            };
+        console.log('经典棋局功能已取消，正在加载爬取棋谱分类...');
 
-            const gameMoves = classicGames[gameName];
-            if (!gameMoves) {
-                console.error('未找到棋谱:', gameName);
-                return;
-            }
-
-            // 清空移动历史
-            this.moveHistory = [];
-
-            // 设置游戏状态为演示模式
-            this.gamePhase = 'demonstration';
-
-            // 重置到初始棋局布局
-            this.resetToStartPosition();
-
-            // 执行棋谱中的每一步
-            for (let i = 0; i < gameMoves.length; i++) {
-                const move = gameMoves[i];
-                const [color, pieceType, fromPos, toPos, notation] = move;
-                const [fromRow, fromCol] = fromPos;
-                const [toRow, toCol] = toPos;
-
-                // 查找对应的棋子
-                const piece = this.pieces.find(p =>
-                    p.dataset.color === color &&
-                    p.dataset.type === pieceType &&
-                    parseInt(p.dataset.row) === fromRow &&
-                    parseInt(p.dataset.col) === fromCol
-                );
-
-                if (piece) {
-                    // 记录移动（不存储DOM对象引用）
-                    this.moveHistory.push({
-                        pieceType: piece.dataset.type,
-                        pieceColor: piece.dataset.color,
-                        pieceChar: piece.textContent,
-                        from: { row: fromRow, col: fromCol },
-                        to: { row: toRow, col: toCol },
-                        capturedPiece: null,
-                        notation: notation
-                    });
-
-                    // 执行移动
-                    // 先选中棋子，然后移动到目标位置
-                    this.selectedPiece = piece;
-                    this.movePiece(toRow, toCol);
-                } else {
-                    console.warn(`未找到棋子: ${color} ${pieceType} 在位置 (${fromRow}, ${fromCol})`);
-                }
-            }
-
-            // 如果需要，可以在这里添加自动演示逻辑
-            console.log(`成功加载棋谱: ${gameName}，共 ${gameMoves.length} 步`);
-
-            // 更新棋谱步骤显示（在测试环境中跳过）
-            if (typeof document !== 'undefined') {
-                try {
-                    this.updateRecordStepsDisplay(gameMoves);
-                } catch (stepError) {
-                    console.warn('更新棋谱步骤显示失败:', stepError);
-                }
-            }
-
-            // 重置到起始状态准备演示（在最后执行，避免清空moveHistory）
-            this.resetToStartPosition();
-
-        } catch (error) {
-            console.error('加载经典棋谱失败:', error);
-            // 降级处理：设置默认棋局
-            this.setupPieces();
-        }
+        // 直接显示分类棋谱界面
+        this.showClassificationPanel();
     }
 
     // 加载并播放经典棋局（使用解析器的新版本）
@@ -2123,8 +1970,9 @@ class XiangqiGame {
             // 加载分类数据
             const categoryData = await this.loadClassifiedGameDatabase();
             if (!categoryData || !categoryData.games) {
-                console.log('使用旧的固定棋谱');
-                this.setupFixedGameButtons();
+                console.log('爬取棋谱数据不可用，使用示例数据');
+                // 使用样品数据而不是固定经典按钮
+                this.displayGameSeries(this.createSampleSeriesData());
                 return;
             }
 
@@ -2154,7 +2002,8 @@ class XiangqiGame {
 
         } catch (error) {
             console.error('显示分类界面失败:', error.message);
-            this.setupFixedGameButtons();
+            // 降级使用示例数据而不是固定经典按钮
+            this.displayGameSeries(this.createSampleSeriesData());
         }
     }
 
@@ -2668,24 +2517,18 @@ notation: notation
     }
 
     setupFixedGameButtons() {
+        // 不再显示经典开局的固定按钮，直接留空
         const recordButtons = document.getElementById('recordButtons');
         recordButtons.innerHTML = `
-            <!-- 经典残局 -->
-            <div class="record-category">
-                <h4>经典残局</h4>
-                <button class="record-btn" data-game="七星聚会">七星聚会</button>
-                <button class="record-btn" data-game="蚯蚓降龙">蚯蚓降龙</button>
-                <button class="record-btn" data-game="野马操田">野马操田</button>
-                <button class="record-btn" data-game="千里独行">千里独行</button>
-            </div>
-            <!-- 经典开局 -->
-            <div class="record-category">
-                <h4>经典开局</h4>
-                <button class="record-btn" data-game="中炮对屏风马经典">中炮对屏风马</button>
-                <button class="record-btn" data-game="中炮对顺炮对攻">中炮对顺炮</button>
-                <button class="record-btn" data-game="仙人指路对中炮">仙人指路</button>
+            <div class="loading-message">
+                <p>正在加载棋谱分类...</p>
             </div>
         `;
+
+        // 加载分类棋谱界面
+        setTimeout(() => {
+            this.showClassificationPanel();
+        }, 100);
     }
 
     // 解析标准棋谱格式并转换为游戏格式
