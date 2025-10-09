@@ -1,6 +1,73 @@
 // chess.js
 // 中国象棋游戏主类
 
+// ==================== 工具函数区域 ====================
+// 纯函数，无副作用，便于测试和复用
+
+/**
+ * 根据行列坐标查找棋子
+ * @param {Array} pieces - 棋子数组
+ * @param {number} row - 行坐标
+ * @param {number} col - 列坐标
+ * @returns {Object|null} 找到的棋子或null
+ */
+function findPieceAt(pieces, row, col) {
+    return pieces.find(piece =>
+        parseInt(piece.dataset.row) === row &&
+        parseInt(piece.dataset.col) === col
+    );
+}
+
+/**
+ * 检查指定位置是否是自己的棋子
+ * @param {Array} pieces - 棋子数组
+ * @param {number} row - 行坐标
+ * @param {number} col - 列坐标
+ * @param {string} color - 棋子颜色 ('red'|'black')
+ * @returns {boolean} 是否是自己的棋子
+ */
+function isOwnPieceAt(pieces, row, col, color) {
+    return pieces.some(piece =>
+        parseInt(piece.dataset.row) === row &&
+        parseInt(piece.dataset.col) === col &&
+        piece.dataset.color === color
+    );
+}
+
+/**
+ * 检查将帅是否照面（中间无棋子）
+ * @param {Array} pieces - 棋子数组
+ * @returns {boolean} 将帅是否照面
+ */
+function areKingsFacing(pieces) {
+    const redKing = pieces.find(p => p.dataset.type === 'king' && p.dataset.color === 'red');
+    const blackKing = pieces.find(p => p.dataset.type === 'king' && p.dataset.color === 'black');
+
+    if (!redKing || !blackKing) return false;
+
+    const redRow = parseInt(redKing.dataset.row);
+    const redCol = parseInt(redKing.dataset.col);
+    const blackRow = parseInt(blackKing.dataset.row);
+    const blackCol = parseInt(blackKing.dataset.col);
+
+    // 只有在同一列才可能照面
+    if (redCol !== blackCol) return false;
+
+    // 检查两将之间是否有棋子
+    const minRow = Math.min(redRow, blackRow);
+    const maxRow = Math.max(redRow, blackRow);
+
+    for (let row = minRow + 1; row < maxRow; row++) {
+        if (findPieceAt(pieces, row, redCol)) {
+            return false; // 有棋子阻挡，不会照面
+        }
+    }
+
+    return true; // 两将照面
+}
+
+// ==================== 游戏主类 ====================
+
 class XiangqiGame {
     constructor() {
         // 在测试环境中，board可能不存在
@@ -740,11 +807,7 @@ class XiangqiGame {
     }
 
     isOwnPieceAt(row, col, color) {
-        return this.pieces.some(piece => 
-            parseInt(piece.dataset.row) === row &&
-            parseInt(piece.dataset.col) === col &&
-            piece.dataset.color === color
-        );
+        return isOwnPieceAt(this.pieces, row, col, color);
     }
 
     getCellAt(row, col) {
@@ -924,10 +987,7 @@ class XiangqiGame {
 
     // 修复棋子查找方法，确保能正确找到棋子
     getPieceAt(row, col) {
-        return this.pieces.find(piece => 
-            parseInt(piece.dataset.row) === row &&
-            parseInt(piece.dataset.col) === col
-        );
+        return findPieceAt(this.pieces, row, col);
     }
 
     capturePiece(piece) {
@@ -972,30 +1032,7 @@ class XiangqiGame {
 
     // 检查将帅是否照面（中间无棋子）
     isKingFacing() {
-        const redKing = this.pieces.find(p => p.dataset.type === 'king' && p.dataset.color === 'red');
-        const blackKing = this.pieces.find(p => p.dataset.type === 'king' && p.dataset.color === 'black');
-
-        if (!redKing || !blackKing) return false;
-
-        const redRow = parseInt(redKing.dataset.row);
-        const redCol = parseInt(redKing.dataset.col);
-        const blackRow = parseInt(blackKing.dataset.row);
-        const blackCol = parseInt(blackKing.dataset.col);
-
-        // 只有在同一列才可能照面
-        if (redCol !== blackCol) return false;
-
-        // 检查两将之间是否有棋子
-        const minRow = Math.min(redRow, blackRow);
-        const maxRow = Math.max(redRow, blackRow);
-
-        for (let row = minRow + 1; row < maxRow; row++) {
-            if (this.getPieceAt(row, redCol)) {
-                return false; // 有棋子阻挡，不会照面
-            }
-        }
-
-        return true; // 两将照面
+        return areKingsFacing(this.pieces);
     }
 
     //检查指定颜色是否被将军
