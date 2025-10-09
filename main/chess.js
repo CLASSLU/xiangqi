@@ -88,6 +88,339 @@ function filterValidMoves(moves) {
 // ==================== 棋子移动规则函数 ====================
 
 /**
+ * 验证棋谱数据的完整性和有效性
+ * @param {Object} gameData - 棋谱数据对象
+ * @returns {Array} 验证后的有效棋步数组
+ */
+function validateGameDataStructure(gameData) {
+    if (!gameData.moves || !Array.isArray(gameData.moves)) {
+        console.warn('棋谱数据缺少棋步信息');
+        return [];
+    }
+
+    const validMoves = [];
+    const warnings = [];
+
+    console.log(`开始验证棋谱 '${gameData.title}'，共 ${gameData.moves.length} 个棋步`);
+
+    // 第一步：尝试分析前几个棋步的数据质量
+    const sampleMoves = gameData.moves.slice(0, 5);
+    let outOfRangeCount = 0;
+    let validCount = 0;
+
+    sampleMoves.forEach((move, index) => {
+        if (!move || !move.notation) return;
+
+        let fromRow = move.fromPos?.[0];
+        let fromCol = move.fromPos?.[1];
+        let toRow = move.toPos?.[0];
+        let toCol = move.toPos?.[1];
+
+        // 检查坐标是否在有效范围内
+        if (fromRow !== undefined && fromCol !== undefined && toRow !== undefined && toCol !== undefined) {
+            const validRange = fromRow >= 0 && fromRow < 10 && fromCol >= 0 && fromCol < 9 &&
+                             toRow >= 0 && toRow < 10 && toCol >= 0 && toCol < 9;
+            if (validRange) validCount++;
+            else outOfRangeCount++;
+        }
+    });
+
+    console.log(`🎲 抽样检查 - 有效: ${validCount}, 超出范围: ${outOfRangeCount}`);
+
+    // 如果大量数据有问题，尝试从记谱法重建
+    if (outOfRangeCount > validCount && validCount < 2) {
+        console.log('检测到大量坐标数据异常，尝试重建棋步...');
+        const reconstructedMoves = rebuildMovesFromNotation(gameData);
+        if (reconstructedMoves) {
+            console.log('✅ 使用重新计算的棋步');
+            return reconstructedMoves;
+        }
+    }
+
+    // 默认验证：按原数据进行完整性检查
+    gameData.moves.forEach((move, index) => {
+        try {
+            // 验证基本数据结构
+            if (!move || typeof move !== 'object') {
+                warnings.push(`棋步 ${index + 1}: 数据结构错误`);
+                return;
+            }
+
+            // 验证必需字段
+            if (!move.color || !move.pieceType || !move.fromPos || !move.toPos) {
+                warnings.push(`棋步 ${index + 1}: 缺少必需字段`);
+                return;
+            }
+
+            // 验证颜色
+            if (move.color !== 'red' && move.color !== 'black') {
+                warnings.push(`棋步 ${index + 1}: 无效的颜色 '${move.color}'`);
+                return;
+            }
+
+            // 验证棋步坐标（应该是 [row, col] 格式，row 0-9, col 0-8）
+            if (!Array.isArray(move.fromPos) || move.fromPos.length !== 2 ||
+                !Array.isArray(move.toPos) || move.toPos.length !== 2) {
+                warnings.push(`棋步 ${index + 1}: 坐标格式错误`);
+                return;
+            }
+
+            let fromRow = move.fromPos[0];
+            let fromCol = move.fromPos[1];
+            let toRow = move.toPos[0];
+            let toCol = move.toPos[1];
+
+            // 验证坐标范围和类型
+            const isValidCoord = (val) => typeof val === 'number';
+            const inValidRange = (val, max) => val >= 0 && val <= max;
+
+            if (!isValidCoord(fromRow) || !isValidCoord(fromCol) ||
+                !isValidCoord(toRow) || !isValidCoord(toCol)) {
+                warnings.push(`棋步 ${index + 1}: 坐标类型错误 - 应为数字`);
+                return;
+            }
+
+            if (!inValidRange(fromRow, 9) || !inValidRange(fromCol, 8) ||
+                !inValidRange(toRow, 9) || !inValidRange(toCol, 8)) {
+                warnings.push(`棋步 ${index + 1}: 坐标超出棋盘范围 [${fromRow},${fromCol}]→[${toRow},${toCol}]`);
+                return;
+            }
+
+            // 验证棋子类型
+            const validPieceTypes = ['king', 'rook', 'horse', 'cannon', 'elephant', 'advisor', 'soldier'];
+            if (!validPieceTypes.includes(move.pieceType)) {
+                warnings.push(`棋步 ${index + 1}: 无效的棋子类型 '${move.pieceType}'`);
+                return;
+            }
+
+            // 验证中文记谱法（如果有的话）
+            if (move.notation && !move.notation.match(/^[一-龥]/)) {
+                console.warn(`棋步 ${index + 1}: 记谱法格式异常 '${move.notation}'`);
+            }
+
+            // 如果通过所有验证，添加有效棋步
+            validMoves.push([
+                move.color,
+                move.pieceType,
+                [fromRow, fromCol],
+                [toRow, toCol],
+                move.notation || `${move.pieceType} move ${index + 1}`
+            ]);
+
+        } catch (error) {
+            warnings.push(`棋步 ${index + 1}: 处理错误 - ${error.message}`);
+        }
+    });
+
+    // 打印统计信息
+    if (warnings.length > 0) {
+        console.warn(`棋谱 '${gameData.title}' 数据验证警告 (${warnings.length}):`);
+        warnings.slice(0, 3).forEach(warning => console.warn(' -', warning)); // 只显示前3个
+        if (warnings.length > 3) {
+            console.warn(`... (还有更多 ${warnings.length - 3} 个警告)`);
+        }
+    }
+
+    console.log(`数据验证结果: ${gameData.moves.length} 个原始棋步 → ${validMoves.length} 个有效棋步`);
+
+    // 如果有效棋步太少，给出警告
+    if (validMoves.length < 8) {
+        console.warn(`棋谱 '${gameData.title}' 的有效棋步数量不足 (${validMoves.length} < 8)`);
+    }
+
+    return validMoves;
+}
+
+/**
+ * 从记谱法重新计算棋步坐标
+ * @param {Object} gameData - 包含记谱法的棋谱数据
+ * @returns {Array|false} 重建的棋步数组或失败时返回false
+ */
+function rebuildMovesFromNotation(gameData) {
+    console.log('🔄 尝试从记谱法重新计算坐标...');
+
+    try {
+        // 检查是否有有效的记谱法解析器
+        if (typeof ChessNotationParser === 'undefined') {
+            console.log('⚠️ ChessNotationParser未定义，尝试动态导入');
+            return false;
+        }
+
+        const parser = new ChessNotationParser();
+
+        // 收集所有有效的记谱法
+        const notations = gameData.moves
+            .map(move => move.notation)
+            .filter(notation => notation && typeof notation === 'string' && notation.trim());
+
+        console.log(`准备解析 ${notations.length} 个记谱法:`, notations.slice(0, 3));
+
+        if (notations.length < 8) {
+            console.log('⚠️ 记谱法数量不足(需≥8个), 当前:', notations.length);
+            return false;
+        }
+
+        try {
+            const parsedMoves = parser.parseNotationSequence(notations);
+
+            if (parsedMoves && Array.isArray(parsedMoves) && parsedMoves.length > 0) {
+                const reconstructedMoves = parsedMoves.map((parsedMove, index) => {
+                    if (!parsedMove || !parsedMove.color || !parsedMove.pieceType ||
+                        !parsedMove.fromPos || !parsedMove.toPos) {
+                        console.warn(`记谱法步骤 ${index + 1} 解析不完整`);
+                        return null;
+                    }
+
+                    return [
+                        parsedMove.color,
+                        parsedMove.pieceType,
+                        parsedMove.fromPos,
+                        parsedMove.toPos,
+                        parsedMove.notation || notations[index] || `${parsedMove.pieceType} move ${index + 1}`
+                    ];
+                }).filter(move => move !== null);
+
+                if (reconstructedMoves.length > notations.length * 0.8) {
+                    console.log(`✅ 成功重建 ${reconstructedMoves.length}/${notations.length} 个棋步`);
+                    return reconstructedMoves;
+                } else {
+                    console.log(`⚠️ 重建成功率太低(${Math.floor(reconstructedMoves.length/notations.length*100)}%)`);
+                }
+            }
+
+        } catch (parseError) {
+            console.log('🔄 分段解析失败，尝试逐步解析...');
+            // 如果整体解析失败，尝试逐个解析
+            const individualMoves = [];
+            let parseErrorCount = 0;
+
+            for (let notation of notations) {
+                try {
+                    const result = parser.parseNotation(notation);
+                    if (result && result.color && result.pieceType && result.fromPos) {
+                        individualMoves.push([
+                            result.color,
+                            result.pieceType,
+                            result.fromPos,
+                            result.toPos || estimateMoveTarget(result.fromPos, notation),
+                            notation
+                        ]);
+                    } else {
+                        console.warn(`警告：解析 ${notation} 缺少关键数据`);
+                        parseErrorCount++;
+                    }
+                } catch (e) {
+                    parseErrorCount++;
+                }
+            }
+
+            if (individualMoves.length > notations.length * 0.7) {
+                console.log(`✅ 逐步解析成功，恢复率：${Math.floor(individualMoves.length/notations.length*100)}%`);
+                return individualMoves;
+            } else {
+                console.log(`逐步解析失败，${notations.length - individualMoves.length} 解析错误`);
+            }
+        }
+
+    } catch (error) {
+        console.log('🔄 记谱法重建失败:', error.message);
+    }
+
+    return false;
+}
+
+/**
+ * 估算棋步目标坐标（基于记谱法的启发式规则）
+ * @param {Array} fromPos - 起始位置 [row, col]
+ * @param {string} notation - 记谱法字符串
+ * @returns {Array} 估算的目标位置 [row, col]
+ */
+function estimateMoveTarget(fromPos, notation) {
+    const [fromRow, fromCol] = fromPos;
+
+    // 基于记谱法模式估算目标位置
+    if (notation.includes('进一')) return [fromRow + 1, fromCol];
+    if (notation.includes('进二')) return [fromRow + 2, fromCol];
+    if (notation.includes('进三')) return [fromRow + 3, fromCol];
+    if (notation.includes('进四')) return [fromRow + 4, fromCol];
+    if (notation.includes('进五')) return [fromRow + 5, fromCol];
+    if (notation.includes('进六')) return [fromRow + 6, fromCol];
+    if (notation.includes('退一')) return [fromRow - 1, fromCol];
+    if (notation.includes('退二')) return [fromRow - 2, fromCol];
+    if (notation.includes('退三')) return [fromRow - 3, fromCol];
+    if (notation.includes('平一')) return [fromRow, fromCol - 3]; // 假设平移量
+    if (notation.includes('平二')) return [fromRow, fromCol - 2];
+    if (notation.includes('平三')) return [fromRow, fromCol - 1];
+
+    // 简单的启发式规则（备用）
+    if (notation.includes('进')) {
+        // 向前移动
+        return [fromRow - 1, fromCol];
+    } else if (notation.includes('退')) {
+        // 向后移动
+        return [fromRow + 1, fromCol];
+    } else if (notation.includes('平')) {
+        // 横向移动
+        if (notation.includes('左')) {
+            return [fromRow, fromCol - 1];
+        } else if (notation.includes('右')) {
+            return [fromRow, fromCol + 1];
+        }
+    }
+
+    // 如果无法解析，返回在当前行内小幅度移动
+    return [fromRow, Math.max(0, fromCol - 1)];
+}
+
+/**
+ * 处理分类棋谱加载的核心逻辑
+ * @param {Object} gameData - 棋谱数据
+ * @param {Function} demoMethod - 演示播放方法
+ * @param {Function} updateUI - UI更新方法
+ * @returns {boolean} 加载是否成功
+ */
+function processClassifiedGameLoad(gameData, demoMethod, updateUI) {
+    console.log('🎯 加载分类棋谱:', gameData.title);
+    try {
+        // 验证和规范化棋谱数据
+        const validatedMoves = validateGameDataStructure(gameData);
+
+        if (validatedMoves.length > 0) {
+            console.log('📊 验证后的棋步数量:', validatedMoves.length);
+
+            // 更新棋谱标题
+            if (updateUI) {
+                updateUI('recordTitle', gameData.title);
+            }
+
+            // 验证分类棋谱不需要初始布局检查（可自由移动）
+            console.log('🔄 分类棋谱使用演示模式，跳过初始布局检查');
+
+            // 使用优化的棋谱播放方法
+            if (demoMethod) {
+                demoMethod(gameData.title, validatedMoves);
+            }
+
+            return true;
+        } else {
+            console.error('分类棋谱数据验证失败:', gameData);
+            if (typeof alert !== 'undefined') {
+                alert('棋谱数据验证失败，无法播放');
+            }
+            return false;
+        }
+    } catch (error) {
+        console.error('加载分类棋谱失败:', error);
+        if (typeof alert !== 'undefined') {
+            alert('加载棋谱失败：' + error.message);
+        }
+        return false;
+    }
+}
+
+// ==================== 棋子移动规则函数 ====================
+
+/**
  * 获取将/帅的合法移动
  * @param {number} row - 当前行
  * @param {number} col - 当前列
@@ -2187,291 +2520,30 @@ class XiangqiGame {
 
     // 加载和播放分类棋谱
     loadAndPlayClassifiedGame(gameData) {
-        console.log('🎯 加载分类棋谱:', gameData.title);
-        try {
-            // 验证和规范化棋谱数据
-            const validatedMoves = this.validateClassifiedGameData(gameData);
-
-            if (validatedMoves.length > 0) {
-                console.log('📊 验证后的棋步数量:', validatedMoves.length);
-
-                // 更新棋谱标题
-                const recordTitle = document.getElementById('recordTitle');
-                if (recordTitle) {
-                    recordTitle.textContent = gameData.title;
-                }
-
-                // 验证分类棋谱不需要初始布局检查（可自由移动）
-                console.log('🔄 分类棋谱使用演示模式，跳过初始布局检查');
-
-                // 使用优化的棋谱播放方法
-                this.loadAndPlayClassifiedGameWithDemo(gameData.title, validatedMoves);
-            } else {
-                console.error('分类棋谱数据验证失败:', gameData);
-                if (typeof alert !== 'undefined') {
-                    alert('棋谱数据验证失败，无法播放');
+        return processClassifiedGameLoad(
+            gameData,
+            this.loadAndPlayClassifiedGameWithDemo.bind(this),
+            (elementId, text) => {
+                const element = document.getElementById(elementId);
+                if (element) {
+                    element.textContent = text;
                 }
             }
-        } catch (error) {
-            console.error('加载分类棋谱失败:', error);
-            if (typeof alert !== 'undefined') {
-                alert('加载棋谱失败：' + error.message);
-            }
-        }
+        );
     }
 
     // 重新生成合理的坐标（基于棋步记谱法）
     recalculateMovesFromNotation(gameData) {
-        console.log('🔄 尝试从记谱法重新计算坐标...');
-
-        try {
-            // 检查是否有有效的记谱法解析器
-            if (typeof ChessNotationParser === 'undefined') {
-                console.log('⚠️ ChessNotationParser未定义，尝试动态导入');
-                return false;
-            }
-
-            const parser = new ChessNotationParser();
-
-            // 收集所有有效的记谱法
-            const notations = gameData.moves
-                .map(move => move.notation)
-                .filter(notation => notation && notation.trim());
-
-            console.log(`准备解析 ${notations.length} 个记谱法:`, notations.slice(0, 3));
-
-            if (notations.length < 8) {
-                console.log('⚠️ 记谱法数量不足(需≥8个), 当前:', notations.length);
-                return false;
-            }
-
-            try {
-                const parsedMoves = parser.parseNotationSequence(notations);
-
-                if (parsedMoves && Array.isArray(parsedMoves) && parsedMoves.length > 0) {
-                    const reconstructedMoves = parsedMoves.map((parsedMove, index) => {
-                        if (!parsedMove || !parsedMove.color || !parsedMove.pieceType ||
-                            !parsedMove.fromPos || !parsedMove.toPos) {
-                            console.warn(`记谱法步骤 ${index + 1} 解析不完整`);
-                            return null;
-                        }
-
-                        return [
-                            parsedMove.color,
-                            parsedMove.pieceType,
-                            parsedMove.fromPos,
-                            parsedMove.toPos,
-                            parsedMove.notation || notations[index] || `${parsedMove.pieceType} move ${index + 1}`
-                        ];
-                    }).filter(move => move !== null);
-
-                    if (reconstructedMoves.length > notations.length * 0.8) {
-                        console.log(`✅ 成功重建 ${reconstructedMoves.length}/${notations.length} 个棋步`);
-                        return reconstructedMoves;
-                    } else {
-                        console.log(`⚠️ 重建成功率太低(${Math.floor(reconstructedMoves.length/notations.length*100)}%)`);
-                    }
-                }
-
-            } catch (parseError) {
-                console.log('🔄 分段解析失败，尝试逐步解析...');
-                // 如果整体解析失败，尝试逐个解析
-                const individualMoves = [];
-                let parseErrorCount = 0;
-
-                for (let notation of notations) {
-                    try {
-                        const result = parser.parseNotation(notation);
-                        if (result && result.color && result.pieceType && result.fromPos) {
-                            individualMoves.push([
-                                result.color,
-                                result.pieceType,
-                                result.fromPos,
-                                result.toPos || this.fixMovePosition(result.fromPos, notation),
-                                notation
-                            ]);
-                        } else {
-                            console.warn(`警告：解析 ${notation} 缺少关键数据`);
-                            parseErrorCount++;
-                        }
-                    } catch (e) {
-                        parseErrorCount++;
-                    }
-                }
-
-                if (individualMoves.length > notations.length * 0.7) {
-                    console.log(`✅ 逐步解析成功，恢复率：${Math.floor(individualMoves.length/notations.length*100)}%`);
-                    return individualMoves;
-                } else {
-                    console.log(`逐步解析失败，${notations.length - individualMoves.length} 解析错误`);
-                }
-            }
-
-        } catch (error) {
-            console.log('🔄 记谱法重建失败:', error.message);
-        }
-
-        return false;
+        return rebuildMovesFromNotation(gameData);
     }
+
     // 辅助函数：估算目标坐标
     fixMovePosition(fromPos, notation) {
-        const [fromRow, fromCol] = fromPos;
-
-        // 基于记谱法模式估算目标位置
-        if (notation.includes('进一')) return [fromRow + 1, fromCol];
-        if (notation.includes('进二')) return [fromRow + 2, fromCol];
-        if (notation.includes('进三')) return [fromRow + 3, fromCol];
-        if (notation.includes('进四')) return [fromRow + 4, fromCol];
-        if (notation.includes('进五')) return [fromRow + 5, fromCol];
-        if (notation.includes('进六')) return [fromRow + 6, fromCol];
-        if (notation.includes('退一')) return [fromRow - 1, fromCol];
-        if (notation.includes('退二')) return [fromRow - 2, fromCol];
-        if (notation.includes('退三')) return [fromRow - 3, fromCol];
-        if (notation.includes('平一')) return [fromRow, fromCol - 3]; // 假设平移量
-        if (notation.includes('平二')) return [fromRow, fromCol - 2];
-        if (notation.includes('平三')) return [fromRow, fromCol - 1];
-
-        // 如果无法解析，返回在当前行内小幅度移动
-        return [fromRow, Math.max(0, fromCol - 1)];
+        return estimateMoveTarget(fromPos, notation);
     }
 
     validateClassifiedGameData(gameData) {
-        if (!gameData.moves || !Array.isArray(gameData.moves)) {
-            console.warn('棋谱数据缺少棋步信息');
-            return [];
-        }
-
-        const validMoves = [];
-        const warnings = [];
-
-        console.log(`开始验证棋谱 '${gameData.title}'，共 ${gameData.moves.length} 个棋步`);
-
-        // 第一步：尝试分析前几个棋步的数据质量
-        const sampleMoves = gameData.moves.slice(0, 5);
-        let outOfRangeCount = 0;
-        let validCount = 0;
-
-        sampleMoves.forEach((move, index) => {
-            if (!move || !move.notation) return;
-
-            let fromRow = move.fromPos?.[0];
-            let fromCol = move.fromPos?.[1];
-            let toRow = move.toPos?.[0];
-            let toCol = move.toPos?.[1];
-
-            // 检查坐标是否在有效范围内
-            if (fromRow !== undefined && fromCol !== undefined && toRow !== undefined && toCol !== undefined) {
-                const validRange = fromRow >= 0 && fromRow < 10 && fromCol >= 0 && fromCol < 9 &&
-                                 toRow >= 0 && toRow < 10 && toCol >= 0 && toCol < 9;
-                if (validRange) validCount++;
-                else outOfRangeCount++;
-            }
-        });
-
-        console.log(`🎲 抽样检查 - 有效: ${validCount}, 超出范围: ${outOfRangeCount}`);
-
-        // 如果大量数据有问题，尝试从记谱法重建
-        if (outOfRangeCount > validCount && validCount < 2) {
-            console.log('检测到大量坐标数据异常，尝试重建棋步...');
-            const reconstructedMoves = this.recalculateMovesFromNotation(gameData);
-            if (reconstructedMoves) {
-                console.log('✅ 使用重新计算的棋步');
-                return reconstructedMoves;
-            }
-        }
-
-        // 默认验证：按原数据进行完整性检查
-        gameData.moves.forEach((move, index) => {
-            try {
-                // 验证基本数据结构
-                if (!move || typeof move !== 'object') {
-                    warnings.push(`棋步 ${index + 1}: 数据结构错误`);
-                    return;
-                }
-
-                // 验证必需字段
-                if (!move.color || !move.pieceType || !move.fromPos || !move.toPos) {
-                    warnings.push(`棋步 ${index + 1}: 缺少必需字段`);
-                    return;
-                }
-
-                // 验证颜色
-                if (move.color !== 'red' && move.color !== 'black') {
-                    warnings.push(`棋步 ${index + 1}: 无效的颜色 '${move.color}'`);
-                    return;
-                }
-
-                // 验证棋步坐标（应该是 [row, col] 格式，row 0-9, col 0-8）
-                if (!Array.isArray(move.fromPos) || move.fromPos.length !== 2 ||
-                    !Array.isArray(move.toPos) || move.toPos.length !== 2) {
-                    warnings.push(`棋步 ${index + 1}: 坐标格式错误`);
-                    return;
-                }
-
-                let fromRow = move.fromPos[0];
-                let fromCol = move.fromPos[1];
-                let toRow = move.toPos[0];
-                let toCol = move.toPos[1];
-
-                // 验证坐标范围和类型
-                const isValidCoord = (val) => typeof val === 'number';
-                const inValidRange = (val, max) => val >= 0 && val <= max;
-
-                if (!isValidCoord(fromRow) || !isValidCoord(fromCol) ||
-                    !isValidCoord(toRow) || !isValidCoord(toCol)) {
-                    warnings.push(`棋步 ${index + 1}: 坐标类型错误 - 应为数字`);
-                    return;
-                }
-
-                if (!inValidRange(fromRow, 9) || !inValidRange(fromCol, 8) ||
-                    !inValidRange(toRow, 9) || !inValidRange(toCol, 8)) {
-                    warnings.push(`棋步 ${index + 1}: 坐标超出棋盘范围 [${fromRow},${fromCol}]→[${toRow},${toCol}]`);
-                    return;
-                }
-
-                // 验证棋子类型
-                const validPieceTypes = ['king', 'rook', 'horse', 'cannon', 'elephant', 'advisor', 'soldier'];
-                if (!validPieceTypes.includes(move.pieceType)) {
-                    warnings.push(`棋步 ${index + 1}: 无效的棋子类型 '${move.pieceType}'`);
-                    return;
-                }
-
-                // 验证中文记谱法（如果有的话）
-                if (move.notation && !move.notation.match(/^[一-龥]/)) {
-                    console.warn(`棋步 ${index + 1}: 记谱法格式异常 '${move.notation}'`);
-                }
-
-                // 如果通过所有验证，添加有效棋步
-                validMoves.push([
-                    move.color,
-                    move.pieceType,
-                    [fromRow, fromCol],
-                    [toRow, toCol],
-                    move.notation || `${move.pieceType} move ${index + 1}`
-                ]);
-
-            } catch (error) {
-                warnings.push(`棋步 ${index + 1}: 处理错误 - ${error.message}`);
-            }
-        });
-
-        // 打印统计信息
-        if (warnings.length > 0) {
-            console.warn(`棋谱 '${gameData.title}' 数据验证警告 (${warnings.length}):`);
-            warnings.slice(0, 3).forEach(warning => console.warn(' -', warning)); // 只显示前3个
-            if (warnings.length > 3) {
-                console.warn(`... (还有更多 ${warnings.length - 3} 个警告)`);
-            }
-        }
-
-        console.log(`数据验证结果: ${gameData.moves.length} 个原始棋步 → ${validMoves.length} 个有效棋步`);
-
-        // 如果有效棋步太少，给出警告
-        if (validMoves.length < 8) {
-            console.warn(`棋谱 '${gameData.title}' 的有效棋步数量不足 (${validMoves.length} < 8)`);
-        }
-
-        return validMoves;
+        return validateGameDataStructure(gameData);
     }
 
     // 专为演示棋谱设计的播放方法
