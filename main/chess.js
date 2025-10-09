@@ -85,6 +85,188 @@ function filterValidMoves(moves) {
     return moves.filter(([r, c]) => isValidPosition(r, c));
 }
 
+// ==================== 棋子移动规则函数 ====================
+
+/**
+ * 获取将/帅的合法移动
+ * @param {number} row - 当前行
+ * @param {number} col - 当前列
+ * @param {string} color - 棋子颜色
+ * @param {Function} isOwnPieceAt - 检查是否是己方棋子的函数
+ * @returns {Array} 合法移动坐标数组
+ */
+function getKingMoves(row, col, color, isOwnPieceAt) {
+    const moves = [];
+    const kingMoves = [[row-1, col], [row+1, col], [row, col-1], [row, col+1]];
+
+    for (const [r, c] of kingMoves) {
+        // 限制在九宫格内移动
+        if (((color === 'red' && r >= 7 && r <= 9) || (color === 'black' && r >= 0 && r <= 2))
+            && c >= 3 && c <= 5) {
+            if (!isOwnPieceAt(r, c, color)) {
+                moves.push([r, c]);
+            }
+        }
+    }
+    return moves;
+}
+
+/**
+ * 获取士/仕的合法移动
+ * @param {number} row - 当前行
+ * @param {number} col - 当前列
+ * @param {string} color - 棋子颜色
+ * @param {Function} isOwnPieceAt - 检查是否是己方棋子的函数
+ * @returns {Array} 合法移动坐标数组
+ */
+function getAdvisorMoves(row, col, color, isOwnPieceAt) {
+    const moves = [];
+    const advisorMoves = [[row-1, col-1], [row-1, col+1], [row+1, col-1], [row+1, col+1]];
+
+    for (const [r, c] of advisorMoves) {
+        if (isValidPosition(r, c)) {
+            // 限制在九宫格内移动
+            if (((color === 'red' && r >= 7 && r <= 9) || (color === 'black' && r >= 0 && r <= 2))
+                && c >= 3 && c <= 5) {
+                if (!isOwnPieceAt(r, c, color)) {
+                    moves.push([r, c]);
+                }
+            }
+        }
+    }
+    return moves;
+}
+
+/**
+ * 获取象/相的合法移动
+ * @param {number} row - 当前行
+ * @param {number} col - 当前列
+ * @param {string} color - 棋子颜色
+ * @param {Function} isOwnPieceAt - 检查是否是己方棋子的函数
+ * @param {Function} getPieceAt - 获取指定位置棋子的函数
+ * @returns {Array} 合法移动坐标数组
+ */
+function getElephantMoves(row, col, color, isOwnPieceAt, getPieceAt) {
+    const moves = [];
+    const elephantMoves = [
+        {move: [row-2, col-2], eye: [row-1, col-1]},
+        {move: [row-2, col+2], eye: [row-1, col+1]},
+        {move: [row+2, col-2], eye: [row+1, col-1]},
+        {move: [row+2, col+2], eye: [row+1, col+1]}
+    ];
+
+    for (const move of elephantMoves) {
+        const [r, c] = move.move;
+        const [eyeRow, eyeCol] = move.eye;
+
+        if (isValidPosition(r, c)) {
+            // 不能过河
+            if ((color === 'red' && r >= 5) || (color === 'black' && r <= 4)) {
+                // 检查象眼是否有棋子（蹩象腿）
+                if (!getPieceAt(eyeRow, eyeCol)) {
+                    if (!isOwnPieceAt(r, c, color)) {
+                        moves.push([r, c]);
+                    }
+                }
+            }
+        }
+    }
+    return moves;
+}
+
+/**
+ * 获取马的合法移动
+ * @param {number} row - 当前行
+ * @param {number} col - 当前列
+ * @param {string} color - 棋子颜色
+ * @param {Function} isOwnPieceAt - 检查是否是己方棋子的函数
+ * @param {Function} getPieceAt - 获取指定位置棋子的函数
+ * @returns {Array} 合法移动坐标数组
+ */
+function getHorseMoves(row, col, color, isOwnPieceAt, getPieceAt) {
+    const moves = [];
+    const horseMoves = [
+        {move: [row-2, col-1], leg: [row-1, col]},
+        {move: [row-2, col+1], leg: [row-1, col]},
+        {move: [row-1, col-2], leg: [row, col-1]},
+        {move: [row-1, col+2], leg: [row, col+1]},
+        {move: [row+1, col-2], leg: [row, col-1]},
+        {move: [row+1, col+2], leg: [row, col+1]},
+        {move: [row+2, col-1], leg: [row+1, col]},
+        {move: [row+2, col+1], leg: [row+1, col]}
+    ];
+
+    for (const move of horseMoves) {
+        const [r, c] = move.move;
+        const [legRow, legCol] = move.leg;
+
+        if (isValidPosition(r, c)) {
+            // 检查马腿是否有棋子（蹩马腿）
+            if (!getPieceAt(legRow, legCol)) {
+                if (!isOwnPieceAt(r, c, color)) {
+                    moves.push([r, c]);
+                }
+            }
+        }
+    }
+    return moves;
+}
+
+/**
+ * 获取兵/卒的合法移动
+ * @param {number} row - 当前行
+ * @param {number} col - 当前列
+ * @param {string} color - 棋子颜色
+ * @param {Function} isOwnPieceAt - 检查是否是己方棋子的函数
+ * @returns {Array} 合法移动坐标数组
+ */
+function getSoldierMoves(row, col, color, isOwnPieceAt) {
+    const moves = [];
+
+    if (color === 'red') {
+        // 红方（下方）向前是行数减少
+        if (row > 0) {
+            // 向前移动
+            if (!isOwnPieceAt(row-1, col, color)) {
+                moves.push([row-1, col]);
+            }
+        }
+
+        // 过河后可以左右移动（红方过河线是第5行，即row<=4）
+        if (row <= 4) {
+            // 向左移动
+            if (col > 0 && !isOwnPieceAt(row, col-1, color)) {
+                moves.push([row, col-1]);
+            }
+            // 向右移动
+            if (col < 8 && !isOwnPieceAt(row, col+1, color)) {
+                moves.push([row, col+1]);
+            }
+        }
+    } else {
+        // 黑方（上方）向前是行数增加
+        if (row < 9) {
+            if (!isOwnPieceAt(row+1, col, color)) {
+                moves.push([row+1, col]);
+            }
+        }
+
+        // 过河后可以左右移动（黑方过河线是第4行，即row>=5）
+        if (row >= 5) {
+            // 向左移动
+            if (col > 0 && !isOwnPieceAt(row, col-1, color)) {
+                moves.push([row, col-1]);
+            }
+            // 向右移动
+            if (col < 8 && !isOwnPieceAt(row, col+1, color)) {
+                moves.push([row, col+1]);
+            }
+        }
+    }
+
+    return moves;
+}
+
 // ==================== 游戏主类 ====================
 
 class XiangqiGame {
@@ -564,96 +746,28 @@ class XiangqiGame {
 
     // 获取棋子的有效移动位置（公开方法）
     getValidMoves(type, color, row, col) {
-        // 完整版的移动规则
         const moves = [];
-        
+
         switch (type) {
             case 'king':
-                // 将/帅移动规则：只能在九宫格内移动一格
-                const kingMoves = [[row-1, col], [row+1, col], [row, col-1], [row, col+1]];
-                for (const [r, c] of kingMoves) {
-                    // 限制在九宫格内移动
-                    if (((color === 'red' && r >= 7 && r <= 9) || (color === 'black' && r >= 0 && r <= 2)) 
-                        && c >= 3 && c <= 5) {
-                        if (!this.isOwnPieceAt(r, c, color)) {
-                            moves.push([r, c]);
-                        }
-                    }
-                }
-                break;
-                
-            case 'advisor':
-                // 士/仕移动规则：只能斜着走一格，且不能离开九宫格
-                const advisorMoves = [[row-1, col-1], [row-1, col+1], [row+1, col-1], [row+1, col+1]];
-                for (const [r, c] of advisorMoves) {
-                    // 先检查是否在棋盘范围内
-                    if (r >= 0 && r < 10 && c >= 0 && c < 9) {
-                        // 限制在九宫格内移动
-                        if (((color === 'red' && r >= 7 && r <= 9) || (color === 'black' && r >= 0 && r <= 2))
-                            && c >= 3 && c <= 5) {
-                            if (!this.isOwnPieceAt(r, c, color)) {
-                                moves.push([r, c]);
-                            }
-                        }
-                    }
-                }
-                break;
-                
-            case 'elephant':
-                // 象/相移动规则：走田字，不能过河，不能蹩象腿
-                const elephantMoves = [
-                    {move: [row-2, col-2], eye: [row-1, col-1]},
-                    {move: [row-2, col+2], eye: [row-1, col+1]},
-                    {move: [row+2, col-2], eye: [row+1, col-1]},
-                    {move: [row+2, col+2], eye: [row+1, col+1]}
-                ];
-                for (const move of elephantMoves) {
-                    const [r, c] = move.move;
-                    const [eyeRow, eyeCol] = move.eye;
+                // 使用提取的工具函数
+                return getKingMoves(row, col, color, this.isOwnPieceAt.bind(this));
 
-                    // 先检查是否在棋盘范围内
-                    if (r >= 0 && r < 10 && c >= 0 && c < 9) {
-                        // 不能过河
-                        if ((color === 'red' && r >= 5) || (color === 'black' && r <= 4)) {
-                            // 检查象眼是否有棋子（蹩象腿）
-                            if (!this.getPieceAt(eyeRow, eyeCol)) {
-                                if (!this.isOwnPieceAt(r, c, color)) {
-                                    moves.push([r, c]);
-                                }
-                            }
-                        }
-                    }
-                }
-                break;
+            case 'advisor':
+                // 使用提取的工具函数
+                return getAdvisorMoves(row, col, color, this.isOwnPieceAt.bind(this));
+
+            case 'elephant':
+                // 使用提取的工具函数
+                return getElephantMoves(row, col, color, this.isOwnPieceAt.bind(this), this.getPieceAt.bind(this));
+
+            break;
                 
             case 'horse':
-                // 马移动规则：走日字，不能蹩马腿
-                const horseMoves = [
-                    {move: [row-2, col-1], leg: [row-1, col]},
-                    {move: [row-2, col+1], leg: [row-1, col]},
-                    {move: [row-1, col-2], leg: [row, col-1]},
-                    {move: [row-1, col+2], leg: [row, col+1]},
-                    {move: [row+1, col-2], leg: [row, col-1]},
-                    {move: [row+1, col+2], leg: [row, col+1]},
-                    {move: [row+2, col-1], leg: [row+1, col]},
-                    {move: [row+2, col+1], leg: [row+1, col]}
-                ];
+                // 使用提取的工具函数
+                return getHorseMoves(row, col, color, this.isOwnPieceAt.bind(this), this.getPieceAt.bind(this));
 
-                for (const move of horseMoves) {
-                    const [r, c] = move.move;
-                    const [legRow, legCol] = move.leg;
-
-                    // 先检查目标位置是否在棋盘内
-                    if (isValidPosition(r, c)) {
-                        // 检查马腿是否有棋子（蹩马腿）
-                        if (!this.getPieceAt(legRow, legCol)) {
-                            if (!this.isOwnPieceAt(r, c, color)) {
-                                moves.push([r, c]);
-                            }
-                        }
-                    }
-                }
-                break;
+            break;
                 
             case 'rook':
                 // 车移动规则：沿直线移动（横线或纵线），可以走任意格数，但不能越过其他棋子
@@ -777,48 +891,10 @@ class XiangqiGame {
                 break;
                 
             case 'soldier':
-                // 兵/卒移动规则：只能向前走一格，过河后可以左右移动，但不能后退
-                if (color === 'red') {
-                    // 红方（下方）向前是行数减少
-                    if (row > 0) {
-                        // 向前移动
-                        if (!this.isOwnPieceAt(row-1, col, color)) {
-                            moves.push([row-1, col]);
-                        }
-                    }
-                    
-                    // 过河后可以左右移动（红方过河线是第5行，即row<=4）
-                    if (row <= 4) {
-                        // 向左移动
-                        if (col > 0 && !this.isOwnPieceAt(row, col-1, color)) {
-                            moves.push([row, col-1]);
-                        }
-                        // 向右移动
-                        if (col < 8 && !this.isOwnPieceAt(row, col+1, color)) {
-                            moves.push([row, col+1]);
-                        }
-                    }
-                } else {
-                    // 黑方（上方）向前是行数增加
-                    if (row < 9) {
-                        if (!this.isOwnPieceAt(row+1, col, color)) {
-                            moves.push([row+1, col]);
-                        }
-                    }
-                    
-                    // 过河后可以左右移动（黑方过河线是第4行，即row>=5）
-                    if (row >= 5) {
-                        // 向左移动
-                        if (col > 0 && !this.isOwnPieceAt(row, col-1, color)) {
-                            moves.push([row, col-1]);
-                        }
-                        // 向右移动
-                        if (col < 8 && !this.isOwnPieceAt(row, col+1, color)) {
-                            moves.push([row, col+1]);
-                        }
-                    }
-                }
-                break;
+                // 使用提取的工具函数
+                return getSoldierMoves(row, col, color, this.isOwnPieceAt.bind(this));
+
+            break;
         }
         
         // 过滤无效移动（超出棋盘边界）
