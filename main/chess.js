@@ -418,6 +418,288 @@ function processClassifiedGameLoad(gameData, demoMethod, updateUI) {
     }
 }
 
+// ==================== UI渲染和事件处理工具函数 ====================
+
+/**
+ * 创建棋盘格子
+ * @param {HTMLElement} board - 棋盘容器元素
+ * @param {number} cellSize - 格子大小（默认70px）
+ * @returns {Array} 创建的格子数组
+ */
+function createBoardCells(board, cellSize = 70) {
+    const cells = [];
+    for (let row = 0; row < 10; row++) {
+        for (let col = 0; col < 9; col++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.style.position = 'absolute';
+            cell.style.left = col * cellSize + 'px';
+            cell.style.top = row * cellSize + 'px';
+            cell.style.width = cellSize + 'px';
+            cell.style.height = cellSize + 'px';
+            cell.dataset.row = row;
+            cell.dataset.col = col;
+            board.appendChild(cell);
+            cells.push(cell);
+        }
+    }
+    return cells;
+}
+
+/**
+ * 创建楚河汉界元素
+ * @param {HTMLElement} board - 棋盘容器元素
+ * @param {number} cellSize - 格子大小（默认70px）
+ * @returns {HTMLElement} 创建的河界元素
+ */
+function createRiverElement(board, cellSize = 70) {
+    const river = document.createElement('div');
+    river.className = 'river';
+    river.textContent = '楚河        汉界';
+    river.style.position = 'absolute';
+    river.style.top = (4 * cellSize) + 'px';  // 4 * 70px
+    river.style.left = '0';
+    river.style.width = (8 * cellSize) + 'px';  // 8 * 70px
+    river.style.height = cellSize + 'px';
+    board.appendChild(river);
+    return river;
+}
+
+/**
+ * 创建垂直线条元素
+ * @param {number} xPos - X坐标位置
+ * @param {number} yPos - Y坐标起始位置
+ * @param {number} height - 线条高度
+ * @param {string} color - 线条颜色
+ * @param {string} width - 线条宽度
+ * @returns {HTMLElement} 创建的线条元素
+ */
+function createVerticalLine(xPos, yPos, height, color = '#000000', width = '2px') {
+    const line = document.createElement('div');
+    line.style.position = 'absolute';
+    line.style.left = xPos + 'px';
+    line.style.top = yPos + 'px';
+    line.style.width = width;
+    line.style.height = height + 'px';
+    line.style.background = color;
+    line.style.pointerEvents = 'none';
+    line.style.zIndex = '1';
+    return line;
+}
+
+/**
+ * 创建水平线条元素
+ * @param {number} xPos - X坐标起始位置
+ * @param {number} yPos - Y坐标位置
+ * @param {number} width - 线条宽度
+ * @param {string} color - 线条颜色
+ * @param {string} height - 线条高度
+ * @returns {HTMLElement} 创建的线条元素
+ */
+function createHorizontalLine(xPos, yPos, width, color = '#000000', height = '2px') {
+    const line = document.createElement('div');
+    line.style.position = 'absolute';
+    line.style.left = xPos + 'px';
+    line.style.top = yPos + 'px';
+    line.style.width = width + 'px';
+    line.style.height = height + 'px';
+    line.style.background = color;
+    line.style.pointerEvents = 'none';
+    line.style.zIndex = '1';
+    return line;
+}
+
+/**
+ * 绘制棋盘线条系统
+ * @param {HTMLElement} board - 棋盘容器元素
+ * @param {number} cellSize - 格子大小
+ * @param {string} lineColor - 线条颜色
+ * @param {string} lineWidth - 线条宽度
+ */
+function drawChessBoardLines(board, cellSize = 70, lineColor = '#000000', lineWidth = '2px') {
+    // 绘制垂直线（9条），每条在河界处断开
+    for (let col = 0; col < 9; col++) {
+        const xPos = col * cellSize;
+
+        // 上半部分垂直线（0-4行，5条水平线间）
+        const vLineTop = createVerticalLine(
+            xPos, 0, (4 * cellSize), lineColor, lineWidth
+        );
+        board.appendChild(vLineTop);
+
+        // 下半部分垂直线（5-9行，5条水平线间）
+        const vLineBottom = createVerticalLine(
+            xPos, (5 * cellSize), (4 * cellSize), lineColor, lineWidth
+        );
+        board.appendChild(vLineBottom);
+    }
+
+    // 绘制水平线（上半部分：第0,1,2,3,4行，共5条）
+    for (let row = 0; row <= 4; row++) {
+        const hLine = createHorizontalLine(
+            0, row * cellSize, (8 * cellSize + 2), lineColor, lineWidth
+        );
+        board.appendChild(hLine);
+    }
+
+    // 绘制水平线（下半部分：第5,6,7,8,9行，共5条）
+    for (let row = 5; row <= 9; row++) {
+        const hLine = createHorizontalLine(
+            0, row * cellSize, (8 * cellSize + 2), lineColor, lineWidth
+        );
+        board.appendChild(hLine);
+    }
+}
+
+/**
+ * 创建棋子DOM元素
+ * @param {Object} pieceData - 棋子数据 {type, color, row, col, char}
+ * @param {HTMLElement} board - 棋盘容器元素（可选）
+ * @param {number} cellSize - 格子大小
+ * @returns {HTMLElement} 创建的棋子元素
+ */
+function createPieceElement(pieceData, board = null, cellSize = 70) {
+    const piece = document.createElement('div');
+    piece.className = `piece ${pieceData.color}`;
+    piece.textContent = pieceData.char;
+    piece.style.position = 'absolute';
+    piece.style.left = pieceData.col * cellSize + 'px';
+    piece.style.top = pieceData.row * cellSize + 'px';
+    piece.style.width = (cellSize - 10) + 'px';
+    piece.style.height = (cellSize - 10) + 'px';
+    piece.style.fontSize = (cellSize - 20) + 'px';
+    piece.style.zIndex = '10';
+
+    // 设置棋子数据属性
+    piece.dataset.type = pieceData.type;
+    piece.dataset.color = pieceData.color;
+    piece.dataset.row = pieceData.row;
+    piece.dataset.col = pieceData.col;
+
+    if (board) {
+        board.appendChild(piece);
+    }
+
+    return piece;
+}
+
+/**
+ * 创建移动指示器元素
+ * @param {number} row - 目标行
+ * @param {number} col - 目标列
+ * @param {HTMLElement} board - 棋盘容器元素
+ * @param {number} cellSize - 格子大小
+ * @param {Function} onClick - 点击回调函数
+ * @returns {HTMLElement} 创建的移动指示器元素
+ */
+function createMoveIndicator(row, col, board, cellSize = 70, onClick = null) {
+    const moveIndicator = document.createElement('div');
+    moveIndicator.className = 'valid-move';
+    moveIndicator.style.position = 'absolute';
+    moveIndicator.style.left = (col * cellSize + cellSize/2 - 8) + 'px';  // 居中
+    moveIndicator.style.top = (row * cellSize + cellSize/2 - 8) + 'px';
+    moveIndicator.style.width = '16px';
+    moveIndicator.style.height = '16px';
+    moveIndicator.style.borderRadius = '50%';
+    moveIndicator.style.background = 'rgba(0, 123, 255, 0.7)';
+    moveIndicator.style.border = '2px solid #007bff';
+    moveIndicator.style.cursor = 'pointer';
+    moveIndicator.style.zIndex = '15';
+    moveIndicator.style.transition = 'all 0.2s ease';
+
+    // 设置数据属性
+    moveIndicator.dataset.targetRow = row;
+    moveIndicator.dataset.targetCol = col;
+
+    // 添加点击事件
+    if (onClick) {
+        moveIndicator.addEventListener('click', onClick);
+
+        // 添加悬停效果
+        moveIndicator.addEventListener('mouseenter', () => {
+            moveIndicator.style.transform = 'scale(1.2)';
+            moveIndicator.style.background = 'rgba(0, 123, 255, 0.9)';
+        });
+
+        moveIndicator.addEventListener('mouseleave', () => {
+            moveIndicator.style.transform = 'scale(1)';
+            moveIndicator.style.background = 'rgba(0, 123, 255, 0.7)';
+        });
+    }
+
+    board.appendChild(moveIndicator);
+    return moveIndicator;
+}
+
+/**
+ * 清除所有移动指示器
+ * @param {HTMLElement} board - 棋盘容器元素
+ */
+function clearMoveIndicators(board) {
+    if (!board) return;
+    const moveIndicators = board.querySelectorAll('.valid-move');
+    moveIndicators.forEach(indicator => indicator.remove());
+}
+
+/**
+ * 清除棋子选中状态
+ * @param {HTMLElement} piece - 棋子元素
+ */
+function clearPieceSelection(piece) {
+    if (piece && piece.classList) {
+        piece.classList.remove('selected');
+    }
+}
+
+/**
+ * 设置棋子选中状态
+ * @param {HTMLElement} piece - 棋子元素
+ */
+function setPieceSelection(piece) {
+    if (piece && piece.classList) {
+        piece.classList.add('selected');
+    }
+}
+
+/**
+ * 更新UI元素文本内容
+ * @param {string} elementId - 元素ID
+ * @param {string} text - 文本内容
+ */
+function updateElementText(elementId, text) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.textContent = text;
+    }
+}
+
+/**
+ * 更新UI元素显示状态
+ * @param {string} elementId - 元素ID
+ * @param {boolean} show - 是否显示
+ */
+function toggleElementVisibility(elementId, show) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.classList.toggle('hidden', !show);
+    }
+}
+
+/**
+ * 为按钮绑定事件处理器
+ * @param {string} buttonId - 按钮ID
+ * @param {Function} handler - 事件处理函数
+ * @param {string} eventType - 事件类型（默认click）
+ */
+function bindButtonEvent(buttonId, handler, eventType = 'click') {
+    if (typeof document === 'undefined') return;
+
+    const button = document.getElementById(buttonId);
+    if (button) {
+        button.addEventListener(eventType, handler);
+    }
+}
+
 // ==================== 棋子移动规则函数 ====================
 
 /**
@@ -637,105 +919,21 @@ class XiangqiGame {
     createBoard() {
         // 在测试环境中跳过DOM操作
         if (!this.board) return;
-        
-        // 创建棋盘格子 (使用70px格子与CSS保持一致)
-        for (let row = 0; row < 10; row++) {
-            for (let col = 0; col < 9; col++) {
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                cell.style.position = 'absolute';
-                cell.style.left = col * 70 + 'px';
-                cell.style.top = row * 70 + 'px';
-                cell.style.width = '70px';
-                cell.style.height = '70px';
-                cell.dataset.row = row;
-                cell.dataset.col = col;
-                this.board.appendChild(cell);
-            }
-        }
 
-        // 绘制棋盘线条
-        this.drawBoardLines();
-
-        // 创建楚河汉界
-        const river = document.createElement('div');
-        river.className = 'river';
-        river.textContent = '楚河        汉界';
-        river.style.position = 'absolute';
-        river.style.top = '280px';  // 4 * 70px
-        river.style.left = '0';
-        river.style.width = '560px';  // 8 * 70px
-        river.style.height = '70px';
-        this.board.appendChild(river);
+        // 使用提取的工具函数创建棋盘
+        createBoardCells(this.board, 70);
+        drawChessBoardLines(this.board, 70);
+        createRiverElement(this.board, 70);
     }
     
-    // 绘制棋盘线条
+    // 绘制棋盘线条（已重构为工具函数，保留以兼容现有调用）
     drawBoardLines() {
         // 在测试环境中跳过DOM操作
         if (!this.board) return;
-        
-        const cellSize = 70;
-        const lineColor = '#000000';
-        const lineWidth = '2px';
-        
-        // 绘制垂直线（9条），每条在河界处断开
-        for (let col = 0; col < 9; col++) {
-            const xPos = col * cellSize;
-            
-            // 上半部分垂直线（0-4行，5条水平线间）
-            const vLineTop = document.createElement('div');
-            vLineTop.style.position = 'absolute';
-            vLineTop.style.left = xPos + 'px';
-            vLineTop.style.top = '0px';
-            vLineTop.style.width = lineWidth;
-            vLineTop.style.height = (4 * cellSize) + 'px';  // 从第0行到第3行底部（280px）
-            vLineTop.style.background = lineColor;
-            vLineTop.style.pointerEvents = 'none';
-            vLineTop.style.zIndex = '1';
-            this.board.appendChild(vLineTop);
-            
-            // 下半部分垂直线（5-9行，5条水平线间）
-            const vLineBottom = document.createElement('div');
-            vLineBottom.style.position = 'absolute';
-            vLineBottom.style.left = xPos + 'px';
-            vLineBottom.style.top = (5 * cellSize) + 'px';  // 从第5行开始
-            vLineBottom.style.width = lineWidth;
-            vLineBottom.style.height = (4 * cellSize) + 'px';  // 从第5行到第9行底部（280px）
-            vLineBottom.style.background = lineColor;
-            vLineBottom.style.pointerEvents = 'none';
-            vLineBottom.style.zIndex = '1';
-            this.board.appendChild(vLineBottom);
-        }
-        
-        // 绘制水平线（上半部分：第0,1,2,3,4行，共5条）
-        for (let row = 0; row <= 4; row++) {
-            const hLine = document.createElement('div');
-            hLine.style.position = 'absolute';
-            hLine.style.left = '0px';
-            hLine.style.top = row * cellSize + 'px';
-            hLine.style.width = (8 * cellSize + 2) + 'px';  // 包含最右侧线条宽度
-            hLine.style.height = lineWidth;
-            hLine.style.background = lineColor;
-            hLine.style.pointerEvents = 'none';
-            hLine.style.zIndex = '1';
-            this.board.appendChild(hLine);
-        }
-        
-        // 绘制水平线（下半部分：第5,6,7,8,9行，共5条）
-        for (let row = 5; row <= 9; row++) {
-            const hLine = document.createElement('div');
-            hLine.style.position = 'absolute';
-            hLine.style.left = '0px';
-            hLine.style.top = row * cellSize + 'px';
-            hLine.style.width = (8 * cellSize + 2) + 'px';  // 包含最右侧线条宽度
-            hLine.style.height = lineWidth;
-            hLine.style.background = lineColor;
-            hLine.style.pointerEvents = 'none';
-            hLine.style.zIndex = '1';
-            this.board.appendChild(hLine);
-        }
-        
-        // 绘制九宫格对角线
+
+        drawChessBoardLines(this.board, 70);
+
+        // 绘制九宫格斜线（保留原有复杂逻辑）
         this.drawPalaceDiagonals();
         
         // 添加炮位和兵位标记
@@ -909,23 +1107,9 @@ class XiangqiGame {
                 }
             };
         }
-        
-        const piece = document.createElement('div');
-        piece.className = `piece ${pieceData.color}`;
-        piece.textContent = pieceData.char;
-        piece.dataset.type = pieceData.type;
-        piece.dataset.color = pieceData.color;
-        piece.dataset.row = pieceData.row;
-        piece.dataset.col = pieceData.col;
-        
-        // 修改棋子位置计算方式，使其精确位于交叉点上（使用70px格子）
-        piece.style.left = pieceData.col * 70 + 'px';
-        piece.style.top = pieceData.row * 70 + 'px';
-        piece.style.position = 'absolute';
-        piece.style.zIndex = '10';
-        
-        this.board.appendChild(piece);
-        return piece;
+
+        // 使用提取的工具函数创建棋子
+        return createPieceElement(pieceData, this.board, 70);
     }
 
     setupEventListeners() {
@@ -949,23 +1133,11 @@ class XiangqiGame {
             }
         });
 
-        // 按钮事件
-        if (typeof document !== 'undefined') {
-            const newGameBtn = document.getElementById('newGame');
-            if (newGameBtn) newGameBtn.addEventListener('click', () => this.resetGame());
-
-            const undoBtn = document.getElementById('undo');
-            if (undoBtn) undoBtn.addEventListener('click', () => this.undoMove());
-
-            const hintBtn = document.getElementById('hint');
-            if (hintBtn) hintBtn.addEventListener('click', () => this.showHint());
-
-            // 全局棋谱按钮事件
-            const showGameRecordsBtn = document.getElementById('showGameRecords');
-            if (showGameRecordsBtn) {
-                showGameRecordsBtn.addEventListener('click', () => this.showRecordPanel());
-            }
-        }
+        // 使用提取的工具函数绑定按钮事件
+        bindButtonEvent('newGame', () => this.resetGame());
+        bindButtonEvent('undo', () => this.undoMove());
+        bindButtonEvent('hint', () => this.showHint());
+        bindButtonEvent('showGameRecords', () => this.showRecordPanel());
     }
 
     handlePieceClick(piece) {
@@ -983,26 +1155,20 @@ class XiangqiGame {
     selectPiece(piece) {
         // 清除之前的选择
         this.clearSelection();
-        
+
         this.selectedPiece = piece;
-        if (piece.classList) piece.classList.add('selected');
-        
+        setPieceSelection(piece);
+
         // 显示可移动位置
         this.showValidMoves(piece);
     }
 
     clearSelection() {
-        if (this.selectedPiece && this.selectedPiece.classList) {
-            this.selectedPiece.classList.remove('selected');
-        }
+        clearPieceSelection(this.selectedPiece);
+        this.selectedPiece = null;
 
         // 清除移动提示点
-        if (this.board) {
-            const moveIndicators = this.board.querySelectorAll('.valid-move');
-            moveIndicators.forEach(indicator => indicator.remove());
-        }
-
-        this.selectedPiece = null;
+        clearMoveIndicators(this.board);
     }
 
     // 处理移动指示器的点击
@@ -1034,45 +1200,12 @@ class XiangqiGame {
         // 在棋盘上显示可移动位置
         validMoves.forEach(([r, c]) => {
             if (this.board) {
-                // 创建移动提示点 - 增大尺寸方便点击
-                const moveIndicator = document.createElement('div');
-                moveIndicator.className = 'valid-move';
-                moveIndicator.style.position = 'absolute';
-
-                // 修正位置计算：使用与棋子相同的计算方式
-                moveIndicator.style.left = (c * 70) + 'px';
-                moveIndicator.style.top = (r * 70) + 'px';
-
-                // 增大移动指示器尺寸，从10px增加到20px
-                moveIndicator.style.width = '20px';
-                moveIndicator.style.height = '20px';
-                moveIndicator.style.backgroundColor = 'rgba(0, 255, 0, 0.6)'; // 稍微降低透明度
-                moveIndicator.style.borderRadius = '50%';
-                moveIndicator.style.border = '2px solid rgba(0, 200, 0, 0.8)'; // 添加边框增强可见性
-                moveIndicator.style.zIndex = '5';
-
-                // 添加transform使指示器居中在交叉点上
-                moveIndicator.style.transform = 'translate(-50%, -50%)';
-
-                // 添加cursor样式提示用户可以点击
-                moveIndicator.style.cursor = 'pointer';
-
-                // 添加hover效果
-                moveIndicator.addEventListener('mouseenter', () => {
-                    moveIndicator.style.backgroundColor = 'rgba(0, 255, 0, 0.8)';
-                    moveIndicator.style.transform = 'translate(-50%, -50%) scale(1.2)';
+                // 使用提取的工具函数创建移动指示器
+                createMoveIndicator(r, c, this.board, 70, () => {
+                    this.handleValidMoveClick({
+                        dataset: { targetRow: r.toString(), targetCol: c.toString() }
+                    });
                 });
-
-                moveIndicator.addEventListener('mouseleave', () => {
-                    moveIndicator.style.backgroundColor = 'rgba(0, 255, 0, 0.6)';
-                    moveIndicator.style.transform = 'translate(-50%, -50%) scale(1)';
-                });
-
-                // 存储目标位置信息用于点击处理
-                moveIndicator.dataset.targetRow = r;
-                moveIndicator.dataset.targetCol = c;
-
-                this.board.appendChild(moveIndicator);
             }
         });
     }
