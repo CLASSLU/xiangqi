@@ -149,7 +149,7 @@ describe('棋谱播放演示功能测试', () => {
     game.resetToStartPosition = jest.fn();
     game.selectedPiece = { dataset: { color: 'red', type: 'soldier', row: '6', col: '4' }, textContent: '兵' };
     game.pieces = [game.selectedPiece];
-    game.movePiece = jest.fn();
+    game.executeDemonstrationMove = jest.fn();
     game.updateStatus = jest.fn();
 
     // 测试播放第1步索引
@@ -159,7 +159,7 @@ describe('棋谱播放演示功能测试', () => {
 
     // 验证重置和移动被调用
     expect(game.resetToStartPosition).toHaveBeenCalled();
-    expect(game.movePiece).toHaveBeenCalled();
+    expect(game.executeDemonstrationMove).toHaveBeenCalled();
   });
 
   // 测试分类棋谱加载
