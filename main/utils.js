@@ -133,9 +133,53 @@ export const safeParseInt = (value, defaultValue = 0) => {
  * @param {string} context - 错误上下文
  * @returns {Function} 错误处理函数
  */
-export const createErrorHandler = (context) => {
+// 生产环境检测
+export const isProduction = () => {
+    return typeof process !== 'undefined' && process.env?.NODE_ENV === 'production' ||
+           (typeof window !== 'undefined' && window.location?.hostname &&
+            window.location.hostname !== 'localhost' &&
+            window.location.hostname !== '127.0.0.1');
+};
+
+// 错误信息脱敏
+export const sanitizeErrorMessage = (error) => {
+    if (!error) return '未知错误';
+
+    if (typeof error === 'string') {
+        return error.substring(0, 200);
+    }
+
+    if (error instanceof Error) {
+        return {
+            type: error.constructor.name,
+            message: error.message?.substring(0, 200) || '发生错误'
+        };
+    }
+
+    if (typeof error === 'object') {
+        return {
+            type: 'ObjectError',
+            message: '对象处理错误'
+        };
+    }
+
+    return '未知错误类型';
+};
+
+export const createErrorHandler = (context, enableVerboseLogs = !isProduction()) => {
     return (error, fallback = null) => {
-        console.error(`[${context}] 错误:`, error);
+        if (enableVerboseLogs) {
+            // 开发环境：详细错误信息
+            console.error(`[${context}] 错误:`, error);
+            if (error && error.stack) {
+                console.error(`[${context}] 堆栈:`, error.stack);
+            }
+        } else {
+            // 生产环境：脱敏错误信息
+            const safeMessage = sanitizeErrorMessage(error);
+            console.error(`[${context}] 错误:`, safeMessage);
+        }
+
         if (fallback && typeof fallback === 'function') {
             return fallback();
         }
@@ -590,6 +634,8 @@ export default {
     isValidPiece,
     safeParseInt,
     createErrorHandler,
+    sanitizeErrorMessage,
+    isProduction,
     safeExecute,
     findInArray,
     safeFilter,
