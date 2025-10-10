@@ -3,7 +3,7 @@
  * @fileoverview 提供通用的工具函数和辅助方法
  */
 
-import { BOARD_CONFIG, ERROR_MESSAGES } from './constants.js';
+// utils.js 现在是完全独立的工具模块，无外部依赖
 
 // ==================== 环境检测 ====================
 /**
@@ -41,40 +41,9 @@ export const safeQuerySelector = (selector) => {
  * @returns {Element} DOM元素
  */
 export const safeCreateElement = (tagName, attributes = {}) => {
-    if (!isBrowser()) {
-        // 测试环境返回模拟对象
-        return {
-            tagName: tagName.toUpperCase(),
-            dataset: {},
-            style: {},
-            classList: {
-                add: () => {},
-                remove: () => {},
-                contains: () => false
-            },
-            addEventListener: () => {},
-            removeEventListener: () => {},
-            appendChild: () => {},
-            remove: () => {},
-            setAttribute: () => {},
-            getAttribute: () => null,
-            textContent: '',
-            innerHTML: ''
-        };
-    }
-
+    if (!isBrowser()) return null;
     const element = document.createElement(tagName);
-    Object.entries(attributes).forEach(([key, value]) => {
-        if (key === 'className') {
-            element.className = value;
-        } else if (key === 'textContent') {
-            element.textContent = value;
-        } else if (key === 'innerHTML') {
-            element.innerHTML = value;
-        } else {
-            element.setAttribute(key, value);
-        }
-    });
+    Object.assign(element, attributes);
     return element;
 };
 
@@ -98,10 +67,11 @@ export const ensureStyle = (element) => {
  * @param {number} col - 列坐标
  * @returns {boolean} 是否有效
  */
-export const isValidPosition = (row, col) => {
+export const isValidPosition = (row, col, config = { rows: 10, cols: 9 }) => {
+    const { rows, cols } = config;
     return Number.isInteger(row) && Number.isInteger(col) &&
-           row >= 0 && row < BOARD_CONFIG.ROWS &&
-           col >= 0 && col < BOARD_CONFIG.COLS;
+           row >= 0 && row < rows &&
+           col >= 0 && col < cols;
 };
 
 /**
@@ -109,11 +79,12 @@ export const isValidPosition = (row, col) => {
  * @param {Object} piece - 棋子数据
  * @returns {boolean} 是否有效
  */
-export const isValidPiece = (piece) => {
+export const isValidPiece = (piece, config = { pieceTypes: [], colors: { RED: 'red', BLACK: 'black' } }) => {
+    const { pieceTypes, colors } = config;
     return piece &&
            typeof piece === 'object' &&
-           BOARD_CONFIG.PIECE_TYPES.includes(piece.type) &&
-           BOARD_CONFIG.COLORS.RED === piece.color || BOARD_CONFIG.COLORS.BLACK === piece.color;
+           (pieceTypes.length === 0 || pieceTypes.includes(piece.type)) &&
+           (colors.RED === piece.color || colors.BLACK === piece.color);
 };
 
 /**
@@ -203,59 +174,9 @@ export const safeExecute = (fn, fallback = null, context = 'Unknown') => {
     }
 };
 
-// ==================== 数组和集合工具 ====================
-/**
- * 查找数组中满足条件的元素
- * @param {Array} array - 要搜索的数组
- * @param {Function} predicate - 断言函数
- * @returns {*} 找到的元素或undefined
- */
-export const findInArray = (array, predicate) => {
-    if (!Array.isArray(array)) return undefined;
-    return array.find(predicate);
-};
+// ==================== 数组操作已简化为使用原生方法 ====================
 
-/**
- * 安全的数组过滤
- * @param {Array} array - 要过滤的数组
- * @param {Function} predicate - 断言函数
- * @returns {Array} 过滤后的数组
- */
-export const safeFilter = (array, predicate) => {
-    if (!Array.isArray(array)) return [];
-    return array.filter(predicate);
-};
-
-/**
- * 检查数组是否包含满足条件的元素
- * @param {Array} array - 要检查的数组
- * @param {Function} predicate - 断言函数
- * @returns {boolean} 是否包含
- */
-export const arraySome = (array, predicate) => {
-    if (!Array.isArray(array)) return false;
-    return array.some(predicate);
-};
-
-// ==================== 字符串工具 ====================
-/**
- * 安全的字符串拼接
- * @param {...any} args - 要拼接的参数
- * @returns {string} 拼接后的字符串
- */
-export const safeStringJoin = (...args) => {
-    return args.map(arg => String(arg || '')).join('');
-};
-
-/**
- * 格式化坐标显示
- * @param {number} row - 行坐标
- * @param {number} col - 列坐标
- * @returns {string} 格式化的坐标字符串
- */
-export const formatPosition = (row, col) => {
-    return `(${row}, ${col})`;
-};
+// ==================== 字符串操作已简化为使用模板字符串 ====================
 
 // ==================== 性能工具 ====================
 /**
@@ -396,51 +317,7 @@ export const createDetailedGameItem = (game, index, qualityColorFn) => {
     return gameItem;
 };
 
-// ==================== 缓存工具 ====================
-/**
- * 创建LRU缓存
- * @param {number} maxSize - 最大缓存大小
- * @returns {Object} 缓存对象
- */
-export const createLRUCache = (maxSize = 100) => {
-    const cache = new Map();
-
-    return {
-        get(key) {
-            if (cache.has(key)) {
-                // 移到最后（最近使用）
-                const value = cache.get(key);
-                cache.delete(key);
-                cache.set(key, value);
-                return value;
-            }
-            return undefined;
-        },
-
-        set(key, value) {
-            if (cache.has(key)) {
-                cache.delete(key);
-            } else if (cache.size >= maxSize) {
-                // 删除最久未使用的项
-                const firstKey = cache.keys().next().value;
-                cache.delete(firstKey);
-            }
-            cache.set(key, value);
-        },
-
-        has(key) {
-            return cache.has(key);
-        },
-
-        clear() {
-            cache.clear();
-        },
-
-        size() {
-            return cache.size;
-        }
-    };
-};
+// ==================== 缓存功能已移除（未使用） ====================
 
 // ==================== HTML安全工具 ====================
 /**
@@ -590,6 +467,50 @@ export const setSafeHTML = (element, template, dynamicData = {}) => {
     element.innerHTML = safeHTML;
 };
 
+// ==================== 配置工厂函数 ====================
+/**
+ * 创建位置验证器
+ * @param {Object} config - 棋盘配置
+ * @returns {Function} 位置验证函数
+ */
+export const createPositionValidator = (config) => {
+    const { rows, cols } = config;
+    return (row, col) => {
+        return Number.isInteger(row) && Number.isInteger(col) &&
+               row >= 0 && row < rows &&
+               col >= 0 && col < cols;
+    };
+};
+
+/**
+ * 创建棋子验证器
+ * @param {Object} config - 棋子配置
+ * @returns {Function} 棋子验证函数
+ */
+export const createPieceValidator = (config) => {
+    const { pieceTypes, colors } = config;
+    return (piece) => {
+        return piece &&
+               typeof piece === 'object' &&
+               (pieceTypes.length === 0 || pieceTypes.includes(piece.type)) &&
+               (colors.RED === piece.color || colors.BLACK === piece.color);
+    };
+};
+
+/**
+ * 创建象棋工具集合
+ * @param {Object} config - 象棋配置
+ * @returns {Object} 工具函数集合
+ */
+export const createChessUtils = (config) => {
+    return {
+        isValidPosition: (row, col) => isValidPosition(row, col, config),
+        isValidPiece: (piece) => isValidPiece(piece, config),
+        createPositionValidator: () => createPositionValidator(config),
+        createPieceValidator: () => createPieceValidator(config)
+    };
+};
+
 // ==================== 棋谱工具 ====================
 /**
  * 验证棋步数据结构
@@ -637,14 +558,8 @@ export default {
     sanitizeErrorMessage,
     isProduction,
     safeExecute,
-    findInArray,
-    safeFilter,
-    arraySome,
-    safeStringJoin,
-    formatPosition,
     debounce,
     throttle,
-    createLRUCache,
     escapeHTML,
     createTextElement,
     createGameListItem,
@@ -653,7 +568,10 @@ export default {
     createGameElementWithChildren,
     setSafeHTML,
     validateMoveStructure,
-    createMove
+    createMove,
+    createPositionValidator,
+    createPieceValidator,
+    createChessUtils
 };
 
 // ==================== 导出到window对象 ====================
