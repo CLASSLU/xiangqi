@@ -131,8 +131,11 @@
             border-bottom: 2px solid rgba(255,255,255,0.3);
         }
     </style>
+    <script src="modal-manager.js"></script>
     <script src="audio-manager.js"></script>
     <script src="chess-notation-parser.js"></script>
+    <script src="game-state.js"></script>
+    <script src="error-handler.js"></script>
 </head>
 <body>
     <div class="container">
@@ -301,7 +304,7 @@
                         console.log('棋谱加载完成:', gameName);
                     } else {
                         console.log('❌ 游戏对象或方法不可用');
-                        alert('游戏尚未初始化完成，请稍后再试');
+                        showMessage('游戏尚未初始化完成，请稍后再试', 'error');
                     }
                 });
             });
@@ -334,11 +337,11 @@
                             window.game.autoPlayFullGame();
                         } else {
                             console.log('❌ autoPlayFullGame方法不存在');
-                            alert('自动演示功能暂时不可用');
+                            showMessage('自动演示功能暂时不可用', 'warning');
                         }
                     } else {
                         console.log('❌ 游戏对象不存在');
-                        alert('游戏尚未初始化');
+                        showMessage('游戏尚未初始化', 'error');
                     }
                 });
             }

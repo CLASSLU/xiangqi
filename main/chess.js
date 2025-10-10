@@ -404,15 +404,19 @@ function processClassifiedGameLoad(gameData, demoMethod, updateUI) {
             return true;
         } else {
             console.error('分类棋谱数据验证失败:', gameData);
-            if (typeof alert !== 'undefined') {
-                alert('棋谱数据验证失败，无法播放');
+            if (typeof showMessage !== 'undefined') {
+                showMessage('棋谱数据验证失败，无法播放', 'error');
+            } else {
+                console.error('棋谱数据验证失败，无法播放');
             }
             return false;
         }
     } catch (error) {
         console.error('加载分类棋谱失败:', error);
-        if (typeof alert !== 'undefined') {
-            alert('加载棋谱失败：' + error.message);
+        if (typeof showMessage !== 'undefined') {
+            showMessage('加载棋谱失败：' + error.message, 'error');
+        } else {
+            console.error('加载棋谱失败：' + error.message);
         }
         return false;
     }
@@ -613,18 +617,35 @@ function createMoveIndicator(row, col, board, cellSize = 70, onClick = null) {
 
     // 添加点击事件
     if (onClick) {
-        moveIndicator.addEventListener('click', onClick);
+        // 如果有game实例，使用事件追踪
+        if (window.game && typeof window.game.registerEventListener === 'function') {
+            window.game.registerEventListener(moveIndicator, 'click', onClick);
 
-        // 添加悬停效果
-        moveIndicator.addEventListener('mouseenter', () => {
-            moveIndicator.style.transform = 'scale(1.2)';
-            moveIndicator.style.background = 'rgba(0, 123, 255, 0.9)';
-        });
+            // 添加悬停效果
+            window.game.registerEventListener(moveIndicator, 'mouseenter', () => {
+                moveIndicator.style.transform = 'scale(1.2)';
+                moveIndicator.style.background = 'rgba(0, 123, 255, 0.9)';
+            });
 
-        moveIndicator.addEventListener('mouseleave', () => {
-            moveIndicator.style.transform = 'scale(1)';
-            moveIndicator.style.background = 'rgba(0, 123, 255, 0.7)';
-        });
+            window.game.registerEventListener(moveIndicator, 'mouseleave', () => {
+                moveIndicator.style.transform = 'scale(1)';
+                moveIndicator.style.background = 'rgba(0, 123, 255, 0.7)';
+            });
+        } else {
+            // 回退到直接添加事件监听器
+            moveIndicator.addEventListener('click', onClick);
+
+            // 添加悬停效果
+            moveIndicator.addEventListener('mouseenter', () => {
+                moveIndicator.style.transform = 'scale(1.2)';
+                moveIndicator.style.background = 'rgba(0, 123, 255, 0.9)';
+            });
+
+            moveIndicator.addEventListener('mouseleave', () => {
+                moveIndicator.style.transform = 'scale(1)';
+                moveIndicator.style.background = 'rgba(0, 123, 255, 0.7)';
+            });
+        }
     }
 
     board.appendChild(moveIndicator);
@@ -691,12 +712,12 @@ function toggleElementVisibility(elementId, show) {
  * @param {Function} handler - 事件处理函数
  * @param {string} eventType - 事件类型（默认click）
  */
-function bindButtonEvent(buttonId, handler, eventType = 'click') {
+function bindButtonEvent(game, buttonId, handler, eventType = 'click') {
     if (typeof document === 'undefined') return;
 
     const button = document.getElementById(buttonId);
     if (button) {
-        button.addEventListener(eventType, handler);
+        game.registerEventListener(button, eventType, handler);
     }
 }
 
@@ -894,6 +915,10 @@ class XiangqiGame {
         this.capturedRed = [];
         this.capturedBlack = [];
         this.gameOver = false;
+
+        // 事件监听器清理机制 - 防止内存泄漏
+        this.eventListeners = new Map();
+        this.registeredElements = new Set();
         
         // 只在浏览器环境中初始化游戏
         if (typeof document !== 'undefined') {
@@ -1117,7 +1142,7 @@ class XiangqiGame {
         if (!this.board) return;
 
         // 棋盘点击事件 - 处理所有点击
-        this.board.addEventListener('click', (e) => {
+        this.registerEventListener(this.board, 'click', (e) => {
             if (this.gameOver) return;
 
             const piece = e.target.closest('.piece');
@@ -1134,10 +1159,10 @@ class XiangqiGame {
         });
 
         // 使用提取的工具函数绑定按钮事件
-        bindButtonEvent('newGame', () => this.resetGame());
-        bindButtonEvent('undo', () => this.undoMove());
-        bindButtonEvent('hint', () => this.showHint());
-        bindButtonEvent('showGameRecords', () => this.showRecordPanel());
+        bindButtonEvent(this, 'newGame', () => this.resetGame());
+        bindButtonEvent(this, 'undo', () => this.undoMove());
+        bindButtonEvent(this, 'hint', () => this.showHint());
+        bindButtonEvent(this, 'showGameRecords', () => this.showRecordPanel());
     }
 
     handlePieceClick(piece) {
@@ -1464,7 +1489,7 @@ class XiangqiGame {
         // 双重验证确保移动合法
         if (!this.isValidMove(targetRow, targetCol)) {
             console.log('非法移动被阻止');
-            alert('非法移动！');
+            showMessage('非法移动！', 'warning');
             this.clearSelection();
             return;
         }
@@ -1513,7 +1538,7 @@ class XiangqiGame {
                     }
                 }
 
-                alert('将帅不能照面！');
+                showMessage('将帅不能照面！', 'warning');
                 return;
             }
         }
@@ -1531,13 +1556,13 @@ class XiangqiGame {
 
             // 检查是否被将死
             if (this.isCheckmate(opponentColor)) {
-                alert(`${opponentColor === 'red' ? '红方' : '黑方'}被将死！${movingColor === 'red' ? '红方' : '黑方'}获胜！`);
+                showMessage(`${opponentColor === 'red' ? '红方' : '黑方'}被将死！${movingColor === 'red' ? '红方' : '黑方'}获胜！`, 'success');
                 this.gameOver = true;
                 return;
             } else {
                 // 显示将军提示
                 setTimeout(() => {
-                    alert(`${opponentColor === 'red' ? '红方' : '黑方'}被将军，必须应将！`);
+                    showMessage(`${opponentColor === 'red' ? '红方' : '黑方'}被将军，必须应将！`, 'warning');
                 }, 500);
             }
         }
@@ -1726,7 +1751,7 @@ class XiangqiGame {
                     const winner = this.currentPlayer === 'red' ? '黑方' : '红方';
                     const loser = this.currentPlayer === 'red' ? '红方' : '黑方';
                     setTimeout(() => {
-                        alert(`${loser}被将死！${winner}获胜！`);
+                        showMessage(`${loser}被将死！${winner}获胜！`, 'success');
                         this.gameOver = true;
                     }, 100);
                     statusText += ` - ${loser}被将死！${winner}获胜！🏆`;
@@ -1753,6 +1778,9 @@ class XiangqiGame {
     }
 
     resetGame() {
+        // 清理所有事件监听器，防止内存泄漏
+        this.cleanupEventListeners();
+
         // 清除棋盘
         if (this.board) {
             this.board.innerHTML = '';
@@ -1785,12 +1813,12 @@ class XiangqiGame {
 
     undoMove() {
         // 悔棋功能（简化实现）
-        alert('悔棋功能将在后续版本实现');
+        showMessage('悔棋功能将在后续版本实现', 'info');
     }
 
     showHint() {
         // 提示功能（简化实现）
-        alert('提示功能将在后续版本实现');
+        showMessage('提示功能将在后续版本实现', 'info');
     }
 
     showRecordPanel() {
@@ -2217,7 +2245,7 @@ class XiangqiGame {
             this.loadAndPlayClassicGameWithData(game.title, game.moves);
         } else {
             console.error('棋谱数据格式错误:', game);
-            alert('棋谱数据格式错误，无法播放');
+            showMessage('棋谱数据格式错误，无法播放', 'error');
         }
     }
 
@@ -3092,6 +3120,113 @@ notation: notation
 
         // 开始演示
         playNextMove();
+    }
+
+    // ==================== 事件监听器清理机制 ====================
+    // 防止内存泄漏：追踪和清理所有注册的事件监听器
+
+    /**
+     * 注册事件监听器并追踪
+     * @param {Element} element - DOM元素
+     * @param {string} type - 事件类型
+     * @param {Function} handler - 事件处理函数
+     * @param {Object} options - 事件选项
+     */
+    registerEventListener(element, type, handler, options = {}) {
+        if (!element || !type || !handler) {
+            console.warn('registerEventListener: 无效的参数', { element, type, handler });
+            return;
+        }
+
+        // 追踪事件监听器
+        if (!this.eventListeners.has(element)) {
+            this.eventListeners.set(element, []);
+        }
+        this.eventListeners.get(element).push({ type, handler, options });
+        this.registeredElements.add(element);
+
+        // 添加事件监听器
+        element.addEventListener(type, handler, options);
+    }
+
+    /**
+     * 清理所有注册的事件监听器
+     * 在游戏重置、页面卸载或其他清理场景时调用
+     */
+    cleanupEventListeners() {
+        console.log(`清理事件监听器: ${this.eventListeners.size} 个元素, ${this.registeredElements.size} 个追踪元素`);
+
+        // 清理所有注册的事件监听器
+        this.eventListeners.forEach((listeners, element) => {
+            listeners.forEach(({ type, handler, options }) => {
+                try {
+                    element.removeEventListener(type, handler, options);
+                } catch (error) {
+                    console.warn('清理事件监听器时出错:', error);
+                }
+            });
+        });
+
+        // 清空追踪数据
+        this.eventListeners.clear();
+        this.registeredElements.clear();
+
+        // 同步清理全局事件监听器
+        this.cleanupGlobalListeners();
+    }
+
+    /**
+     * 清理全局级别的事件监听器
+     * 如window, document级别的监听器
+     */
+    cleanupGlobalListeners() {
+        // 注意：全局监听器需要单独处理，因为可能存在于整个应用生命周期
+        // 这里预留接口，可以根据需要添加具体的全局监听器清理逻辑
+    }
+
+    /**
+     * 检查是否有未清理的监听器
+     * @returns {boolean}
+     */
+    hasUncleanedListeners() {
+        return this.eventListeners.size > 0 || this.registeredElements.size > 0;
+    }
+
+    /**
+     * 获取当前监听器统计信息
+     * @returns {Object}
+     */
+    getEventListenerStats() {
+        let totalListeners = 0;
+        this.eventListeners.forEach(listeners => {
+            totalListeners += listeners.length;
+        });
+
+        return {
+            elements: this.eventListeners.size,
+            totalListeners,
+            trackedElements: this.registeredElements.size
+        };
+    }
+
+    /**
+     * 安全移除特定元素的所有监听器
+     * @param {Element} element - 要清理的元素
+     */
+    cleanupElementListeners(element) {
+        if (!this.eventListeners.has(element)) return;
+
+        const listeners = this.eventListeners.get(element);
+        listeners.forEach(({ type, handler, options }) => {
+            try {
+                element.removeEventListener(type, handler, options);
+            } catch (error) {
+                console.warn('清理元素监听器时出错:', error);
+            }
+        });
+
+        this.eventListeners.delete(element);
+        this.registeredElements.delete(element);
     }
 }
 
