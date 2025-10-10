@@ -1449,6 +1449,11 @@ class XiangqiGame {
         // 移动棋子（直接更新，不进行规则验证）
         piece.dataset.row = targetRow;
         piece.dataset.col = targetCol;
+
+        // 防御性检查：确保style对象存在（测试环境兼容）
+        if (!piece.style) {
+            piece.style = {};
+        }
         piece.style.left = targetCol * 70 + 'px';
         piece.style.top = targetRow * 70 + 'px';
 

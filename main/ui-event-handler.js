@@ -107,6 +107,12 @@ class UIEventHandler {
      */
     handlePieceClick(piece) {
         try {
+            // 防御性检查：确保piece和dataset存在
+            if (!piece || !piece.dataset) {
+                console.warn('无效的棋子元素，忽略点击');
+                return;
+            }
+
             const pieceColor = piece.dataset.color;
 
             if (pieceColor === (this.game ? this.game.currentPlayer : 'red')) {
