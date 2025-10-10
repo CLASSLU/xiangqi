@@ -261,6 +261,10 @@ class ErrorHandler {
         if (this.enableUserNotification && this.window && this.window.showMessage) {
             const userMessage = this.getUserFriendlyMessage(errorData);
             this.window.showMessage(userMessage, 'error');
+        } else if (this.enableUserNotification && typeof global !== 'undefined' && global.window && global.window.showMessage) {
+            // 测试环境下的全局window处理
+            const userMessage = this.getUserFriendlyMessage(errorData);
+            global.window.showMessage(userMessage, 'error');
         }
 
         // 执行回调

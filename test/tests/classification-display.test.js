@@ -31,6 +31,9 @@ describe('分类棋谱界面显示测试', () => {
         global.window = dom.window;
         global.navigator = dom.window.navigator;
 
+        // 模拟showMessage函数
+        global.showMessage = jest.fn().mockResolvedValue(undefined);
+
         game = new XiangqiGame();
         game.board = null;
     });

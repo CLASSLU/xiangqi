@@ -1,89 +1,13 @@
 // chess.js
 // 中国象棋游戏主类
 
-// ==================== 工具函数区域 ====================
-// 纯函数，无副作用，便于测试和复用
-
-/**
- * 根据行列坐标查找棋子
- * @param {Array} pieces - 棋子数组
- * @param {number} row - 行坐标
- * @param {number} col - 列坐标
- * @returns {Object|null} 找到的棋子或null
- */
-function findPieceAt(pieces, row, col) {
-    return pieces.find(piece =>
-        parseInt(piece.dataset.row) === row &&
-        parseInt(piece.dataset.col) === col
-    );
-}
-
-/**
- * 检查指定位置是否是自己的棋子
- * @param {Array} pieces - 棋子数组
- * @param {number} row - 行坐标
- * @param {number} col - 列坐标
- * @param {string} color - 棋子颜色 ('red'|'black')
- * @returns {boolean} 是否是自己的棋子
- */
-function isOwnPieceAt(pieces, row, col, color) {
-    return pieces.some(piece =>
-        parseInt(piece.dataset.row) === row &&
-        parseInt(piece.dataset.col) === col &&
-        piece.dataset.color === color
-    );
-}
-
-/**
- * 检查将帅是否照面（中间无棋子）
- * @param {Array} pieces - 棋子数组
- * @returns {boolean} 将帅是否照面
- */
-function areKingsFacing(pieces) {
-    const redKing = pieces.find(p => p.dataset.type === 'king' && p.dataset.color === 'red');
-    const blackKing = pieces.find(p => p.dataset.type === 'king' && p.dataset.color === 'black');
-
-    if (!redKing || !blackKing) return false;
-
-    const redRow = parseInt(redKing.dataset.row);
-    const redCol = parseInt(redKing.dataset.col);
-    const blackRow = parseInt(blackKing.dataset.row);
-    const blackCol = parseInt(blackKing.dataset.col);
-
-    // 只有在同一列才可能照面
-    if (redCol !== blackCol) return false;
-
-    // 检查两将之间是否有棋子
-    const minRow = Math.min(redRow, blackRow);
-    const maxRow = Math.max(redRow, blackRow);
-
-    for (let row = minRow + 1; row < maxRow; row++) {
-        if (findPieceAt(pieces, row, redCol)) {
-            return false; // 有棋子阻挡，不会照面
-        }
-    }
-
-    return true; // 两将照面
-}
-
-/**
- * 检查坐标是否在棋盘有效范围内
- * @param {number} row - 行坐标 (0-9)
- * @param {number} col - 列坐标 (0-8)
- * @returns {boolean} 坐标是否有效
- */
-function isValidPosition(row, col) {
-    return row >= 0 && row < 10 && col >= 0 && col < 9;
-}
-
-/**
- * 过滤有效的移动坐标
- * @param {Array} moves - 移动坐标数组 [[row, col], ...]
- * @returns {Array} 过滤后的有效移动
- */
-function filterValidMoves(moves) {
-    return moves.filter(([r, c]) => isValidPosition(r, c));
-}
+// ==================== 工具函数引用 ====================
+// 工具函数已移动到相应模块中实现：
+// - getPieceAt: GameState.pieceIndex.get(key) (O(1)查找)
+// - isOwnPieceAt: 通过GameState.getPieceAt实现
+// - isValidPosition(row, col) { return row >= 0 && row < 10 && col >= 0 && col < 9; }
+// - filterValidMoves(moves) { return moves.filter(([r, c]) => isValidPosition(r, c)); }
+// - areKingsFacing: 将在MoveValidator中实现
 
 // ==================== 棋子移动规则函数 ====================
 
@@ -241,12 +165,12 @@ function rebuildMovesFromNotation(gameData) {
 
     try {
         // 检查是否有有效的记谱法解析器
-        if (typeof ChessNotationParser === 'undefined') {
-            console.log('⚠️ ChessNotationParser未定义，尝试动态导入');
+        if (typeof ChessNotationParserV2 === 'undefined') {
+            console.log('⚠️ ChessNotationParserV2未定义，尝试动态导入');
             return false;
         }
 
-        const parser = new ChessNotationParser();
+        const parser = new ChessNotationParserV2();
 
         // 收集所有有效的记谱法
         const notations = gameData.moves
@@ -404,20 +328,12 @@ function processClassifiedGameLoad(gameData, demoMethod, updateUI) {
             return true;
         } else {
             console.error('分类棋谱数据验证失败:', gameData);
-            if (typeof showMessage !== 'undefined') {
-                showMessage('棋谱数据验证失败，无法播放', 'error');
-            } else {
-                console.error('棋谱数据验证失败，无法播放');
-            }
+            showMessage('棋谱数据验证失败，无法播放', 'error');
             return false;
         }
     } catch (error) {
         console.error('加载分类棋谱失败:', error);
-        if (typeof showMessage !== 'undefined') {
-            showMessage('加载棋谱失败：' + error.message, 'error');
-        } else {
-            console.error('加载棋谱失败：' + error.message);
-        }
+        showMessage('加载棋谱失败：' + error.message, 'error');
         return false;
     }
 }
@@ -478,12 +394,12 @@ function createRiverElement(board, cellSize = 70) {
  * @param {string} width - 线条宽度
  * @returns {HTMLElement} 创建的线条元素
  */
-function createVerticalLine(xPos, yPos, height, color = '#000000', width = '2px') {
+function createVerticalLine(xPos, yPos, height, color = '#000000', width = 2) {
     const line = document.createElement('div');
     line.style.position = 'absolute';
     line.style.left = xPos + 'px';
     line.style.top = yPos + 'px';
-    line.style.width = width;
+    line.style.width = (typeof width === 'number' ? width + 'px' : width);
     line.style.height = height + 'px';
     line.style.background = color;
     line.style.pointerEvents = 'none';
@@ -500,13 +416,13 @@ function createVerticalLine(xPos, yPos, height, color = '#000000', width = '2px'
  * @param {string} height - 线条高度
  * @returns {HTMLElement} 创建的线条元素
  */
-function createHorizontalLine(xPos, yPos, width, color = '#000000', height = '2px') {
+function createHorizontalLine(xPos, yPos, width, color = '#000000', height = 2) {
     const line = document.createElement('div');
     line.style.position = 'absolute';
     line.style.left = xPos + 'px';
     line.style.top = yPos + 'px';
     line.style.width = width + 'px';
-    line.style.height = height + 'px';
+    line.style.height = (typeof height === 'number' ? height + 'px' : height);
     line.style.background = color;
     line.style.pointerEvents = 'none';
     line.style.zIndex = '1';
@@ -541,7 +457,7 @@ function drawChessBoardLines(board, cellSize = 70, lineColor = '#000000', lineWi
     // 绘制水平线（上半部分：第0,1,2,3,4行，共5条）
     for (let row = 0; row <= 4; row++) {
         const hLine = createHorizontalLine(
-            0, row * cellSize, (8 * cellSize + 2), lineColor, lineWidth
+            0, row * cellSize, (8 * cellSize), lineColor, lineWidth
         );
         board.appendChild(hLine);
     }
@@ -549,7 +465,7 @@ function drawChessBoardLines(board, cellSize = 70, lineColor = '#000000', lineWi
     // 绘制水平线（下半部分：第5,6,7,8,9行，共5条）
     for (let row = 5; row <= 9; row++) {
         const hLine = createHorizontalLine(
-            0, row * cellSize, (8 * cellSize + 2), lineColor, lineWidth
+            0, row * cellSize, (8 * cellSize), lineColor, lineWidth
         );
         board.appendChild(hLine);
     }
@@ -600,8 +516,9 @@ function createMoveIndicator(row, col, board, cellSize = 70, onClick = null) {
     const moveIndicator = document.createElement('div');
     moveIndicator.className = 'valid-move';
     moveIndicator.style.position = 'absolute';
-    moveIndicator.style.left = (col * cellSize + cellSize/2 - 8) + 'px';  // 居中
-    moveIndicator.style.top = (row * cellSize + cellSize/2 - 8) + 'px';
+    moveIndicator.style.left = (col * cellSize) + 'px';
+    moveIndicator.style.top = (row * cellSize) + 'px';
+    moveIndicator.style.transform = 'translate(-50%, -50%)';
     moveIndicator.style.width = '16px';
     moveIndicator.style.height = '16px';
     moveIndicator.style.borderRadius = '50%';
@@ -623,12 +540,12 @@ function createMoveIndicator(row, col, board, cellSize = 70, onClick = null) {
 
             // 添加悬停效果
             window.game.registerEventListener(moveIndicator, 'mouseenter', () => {
-                moveIndicator.style.transform = 'scale(1.2)';
+                moveIndicator.style.transform = 'translate(-50%, -50%) scale(1.2)';
                 moveIndicator.style.background = 'rgba(0, 123, 255, 0.9)';
             });
 
             window.game.registerEventListener(moveIndicator, 'mouseleave', () => {
-                moveIndicator.style.transform = 'scale(1)';
+                moveIndicator.style.transform = 'translate(-50%, -50%) scale(1)';
                 moveIndicator.style.background = 'rgba(0, 123, 255, 0.7)';
             });
         } else {
@@ -637,12 +554,12 @@ function createMoveIndicator(row, col, board, cellSize = 70, onClick = null) {
 
             // 添加悬停效果
             moveIndicator.addEventListener('mouseenter', () => {
-                moveIndicator.style.transform = 'scale(1.2)';
+                moveIndicator.style.transform = 'translate(-50%, -50%) scale(1.2)';
                 moveIndicator.style.background = 'rgba(0, 123, 255, 0.9)';
             });
 
             moveIndicator.addEventListener('mouseleave', () => {
-                moveIndicator.style.transform = 'scale(1)';
+                moveIndicator.style.transform = 'translate(-50%, -50%) scale(1)';
                 moveIndicator.style.background = 'rgba(0, 123, 255, 0.7)';
             });
         }
@@ -760,7 +677,7 @@ function getAdvisorMoves(row, col, color, isOwnPieceAt) {
     const advisorMoves = [[row-1, col-1], [row-1, col+1], [row+1, col-1], [row+1, col+1]];
 
     for (const [r, c] of advisorMoves) {
-        if (isValidPosition(r, c)) {
+        if (r >= 0 && r < 10 && c >= 0 && c < 9) {
             // 限制在九宫格内移动
             if (((color === 'red' && r >= 7 && r <= 9) || (color === 'black' && r >= 0 && r <= 2))
                 && c >= 3 && c <= 5) {
@@ -795,7 +712,7 @@ function getElephantMoves(row, col, color, isOwnPieceAt, getPieceAt) {
         const [r, c] = move.move;
         const [eyeRow, eyeCol] = move.eye;
 
-        if (isValidPosition(r, c)) {
+        if (r >= 0 && r < 10 && c >= 0 && c < 9) {
             // 不能过河
             if ((color === 'red' && r >= 5) || (color === 'black' && r <= 4)) {
                 // 检查象眼是否有棋子（蹩象腿）
@@ -836,7 +753,7 @@ function getHorseMoves(row, col, color, isOwnPieceAt, getPieceAt) {
         const [r, c] = move.move;
         const [legRow, legCol] = move.leg;
 
-        if (isValidPosition(r, c)) {
+        if (r >= 0 && r < 10 && c >= 0 && c < 9) {
             // 检查马腿是否有棋子（蹩马腿）
             if (!getPieceAt(legRow, legCol)) {
                 if (!isOwnPieceAt(r, c, color)) {
@@ -919,6 +836,16 @@ class XiangqiGame {
         // 事件监听器清理机制 - 防止内存泄漏
         this.eventListeners = new Map();
         this.registeredElements = new Set();
+
+        // 初始化GameDemonstration模块
+        this.gameDemonstration = typeof GameDemonstration !== 'undefined'
+            ? new GameDemonstration(this)
+            : null;
+
+        // 初始化BoardRenderer模块
+        this.boardRenderer = typeof BoardRenderer !== 'undefined'
+            ? new BoardRenderer(this)
+            : null;
         
         // 只在浏览器环境中初始化游戏
         if (typeof document !== 'undefined') {
@@ -945,10 +872,19 @@ class XiangqiGame {
         // 在测试环境中跳过DOM操作
         if (!this.board) return;
 
-        // 使用提取的工具函数创建棋盘
-        createBoardCells(this.board, 70);
-        drawChessBoardLines(this.board, 70);
-        createRiverElement(this.board, 70);
+        // 委托给BoardRenderer模块（仅在浏览器环境）
+        if (this.boardRenderer && typeof this.boardRenderer.createBoard === 'function' && typeof document !== 'undefined') {
+            return this.boardRenderer.createBoard(this.board, 70);
+        }
+
+        // 降级实现
+        if (typeof createBoardCells !== 'undefined') {
+            createBoardCells(this.board, 70);
+            drawChessBoardLines(this.board, 70);
+            this.drawPalaceDiagonals();
+            this.addPositionMarks();
+            createRiverElement(this.board, 70);
+        }
     }
     
     // 绘制棋盘线条（已重构为工具函数，保留以兼容现有调用）
@@ -1072,7 +1008,12 @@ class XiangqiGame {
     }
 
     setupPieces() {
-        // 初始棋子配置
+        // 委托给BoardRenderer模块（仅在浏览器环境）
+        if (this.boardRenderer && typeof this.boardRenderer.setupPieces === 'function' && typeof document !== 'undefined') {
+            return this.boardRenderer.setupPieces();
+        }
+
+        // 降级实现（仅用于测试环境）
         const initialSetup = [
             // 黑方棋子
             { type: 'rook', color: 'black', row: 0, col: 0, char: '車' },
@@ -1389,11 +1330,12 @@ class XiangqiGame {
         }
         
         // 过滤无效移动（超出棋盘边界）
-        return filterValidMoves(moves);
+        return moves.filter(([r, c]) => r >= 0 && r < 10 && c >= 0 && c < 9);
     }
 
     isOwnPieceAt(row, col, color) {
-        return isOwnPieceAt(this.pieces, row, col, color);
+        const piece = this.getPieceAt(row, col);
+        return piece && piece.dataset.color === color;
     }
 
     getCellAt(row, col) {
@@ -1476,6 +1418,51 @@ class XiangqiGame {
         }
 
         return true;
+    }
+
+    // 演示模式下的专用移动方法（跳过规则验证）
+    executeDemonstrationMove(piece, targetRow, targetCol, notation) {
+        const oldRow = parseInt(piece.dataset.row);
+        const oldCol = parseInt(piece.dataset.col);
+        const pieceType = piece.dataset.type;
+        const movingColor = piece.dataset.color;
+
+        // 保存原始位置
+        const originalPosition = { row: oldRow, col: oldCol };
+
+        // 检查是否有吃子
+        const capturedPiece = this.getPieceAt(targetRow, targetCol);
+
+        if (capturedPiece) {
+            // 移除被吃的棋子
+            capturedPiece.remove();
+            this.pieces = this.pieces.filter(p => p !== capturedPiece);
+
+            // 添加到被吃棋子列表
+            if (capturedPiece.dataset.color === 'red') {
+                if (this.capturedRed) this.capturedRed.push(capturedPiece.textContent);
+            } else {
+                if (this.capturedBlack) this.capturedBlack.push(capturedPiece.textContent);
+            }
+        }
+
+        // 移动棋子（直接更新，不进行规则验证）
+        piece.dataset.row = targetRow;
+        piece.dataset.col = targetCol;
+        piece.style.left = targetCol * 70 + 'px';
+        piece.style.top = targetRow * 70 + 'px';
+
+        // 更新当前玩家
+        this.currentPlayer = this.currentPlayer === 'red' ? 'black' : 'red';
+
+        // 清除选中状态
+        this.selectedPiece = null;
+        // 委托给 BoardRenderer 清除高亮
+        if (this.boardRenderer) {
+            this.boardRenderer.clearAllHighlights();
+        }
+
+        console.log(`演示移动: ${movingColor} ${pieceType} (${oldRow},${oldCol}) → (${targetRow},${targetCol}) ${notation ? notation : ''}`);
     }
 
     // 修复移动方法，确保棋子位置更新正确
@@ -1573,7 +1560,13 @@ class XiangqiGame {
 
     // 修复棋子查找方法，确保能正确找到棋子
     getPieceAt(row, col) {
-        return findPieceAt(this.pieces, row, col);
+        for (let i = 0; i < this.pieces.length; i++) {
+            const p = this.pieces[i];
+            if (parseInt(p.dataset.row) === row && parseInt(p.dataset.col) === col) {
+                return p;
+            }
+        }
+        return null;
     }
 
     capturePiece(piece) {
@@ -1618,7 +1611,24 @@ class XiangqiGame {
 
     // 检查将帅是否照面（中间无棋子）
     isKingFacing() {
-        return areKingsFacing(this.pieces);
+        // 临时实现：将稍后移到MoveValidator模块
+        const redKing = this.getPieceAt(9, 4);
+        const blackKing = this.getPieceAt(0, 4);
+
+        if (!redKing || redKing.dataset.type !== 'king' || redKing.dataset.color !== 'red') return false;
+        if (!blackKing || blackKing.dataset.type !== 'king' || blackKing.dataset.color !== 'black') return false;
+
+        // 检查是否在同一列
+        if (4 !== 4) return false;
+
+        // 检查两将之间是否有棋子
+        for (let row = 1; row < 9; row++) {
+            if (this.getPieceAt(row, 4)) {
+                return false; // 有棋子阻挡
+            }
+        }
+
+        return true; // 两将照面
     }
 
     //检查指定颜色是否被将军
@@ -2412,8 +2422,8 @@ class XiangqiGame {
     async loadAndPlayClassicGameWithParser(gameName) {
         try {
             // 使用棋谱解析器解析标准棋谱格式
-            if (typeof ChessNotationParser !== 'undefined') {
-                const parser = new ChessNotationParser();
+            if (typeof ChessNotationParserV2 !== 'undefined') {
+                const parser = new ChessNotationParserV2();
 
                 // 标准棋谱格式数据
                 const standardGames = {
@@ -2473,9 +2483,34 @@ class XiangqiGame {
             // 执行棋谱中的每一步
             for (let i = 0; i < gameMoves.length; i++) {
                 const move = gameMoves[i];
-                const [color, pieceType, fromPos, toPos, notation] = move;
-                const [fromRow, fromCol] = fromPos;
-                const [toRow, toCol] = toPos;
+
+                // 兼容多种数据格式
+                let color, pieceType, fromRow, fromCol, toRow, toCol, notation, fromPos, toPos;
+
+                if (Array.isArray(move)) {
+                    // 格式1: [color, pieceType, [fromRow, fromCol], [toRow, toCol], notation]
+                    [color, pieceType, fromPos, toPos, notation] = move;
+                    [fromRow, fromCol] = fromPos;
+                    [toRow, toCol] = toPos;
+                } else if (typeof move === 'object') {
+                    // 格式2: {color, pieceType, from: {row, col}, to: {row, col}, notation}
+                    color = move.color;
+                    pieceType = move.pieceType;
+                    fromRow = move.from?.row;
+                    fromCol = move.from?.col;
+                    toRow = move.to?.row;
+                    toCol = move.to?.col;
+                    notation = move.notation;
+                } else {
+                    console.warn(`第${i+1}步: 不支持的棋谱数据格式`, move);
+                    continue;
+                }
+
+                // 验证必要字段
+                if (!color || !pieceType || fromRow === undefined || fromCol === undefined || toRow === undefined || toCol === undefined) {
+                    console.warn(`第${i+1}步: 缺少必要字段`, move);
+                    continue;
+                }
 
                 // 查找对应的棋子
                 const piece = this.pieces.find(p =>
@@ -2494,13 +2529,11 @@ class XiangqiGame {
                         from: { row: fromRow, col: fromCol },
                         to: { row: toRow, col: toCol },
                         capturedPiece: null,
-                        notation: notation
+                        notation: notation || `${pieceType}${fromRow},${fromCol}→${toRow},${toCol}`
                     });
 
-                    // 执行移动
-                    // 先选中棋子，然后移动到目标位置
-                    this.selectedPiece = piece;
-                    this.movePiece(toRow, toCol);
+                    // 在演示模式下执行移动，跳过正常验证
+                    this.executeDemonstrationMove(piece, toRow, toCol, notation);
 
                     // 调试输出
                     if (notation === '马二进三') {
@@ -2508,7 +2541,7 @@ class XiangqiGame {
                         console.log(`✅ 这是${fromCol === 7 ? '右边' : '左边'}的马`);
                     }
                 } else {
-                    console.warn(`未找到棋子: ${color} ${pieceType} 在位置 (${fromRow}, ${fromCol})`);
+                    console.warn(`第${i+1}步: 未找到棋子 ${color} ${pieceType} 在位置 (${fromRow}, ${fromCol})`);
                 }
             }
 
@@ -2904,72 +2937,21 @@ notation: notation
         }, 100);
     }
 
-    // 解析标准棋谱格式并转换为游戏格式
+    // 解析标准棋谱格式并转换为游戏格式（委托给GameDemonstration）
     parseStandardNotation(standardNotations) {
-        try {
-            // 检查是否有棋谱解析器
-            if (typeof ChessNotationParser === 'undefined') {
-                console.warn('棋谱解析器未加载，无法解析标准棋谱格式');
-                return null;
-            }
-
-            const parser = new ChessNotationParser();
-            return parser.parseNotationSequence(standardNotations);
-        } catch (error) {
-            console.error('解析标准棋谱失败:', error);
-            return null;
+        if (this.gameDemonstration && typeof this.gameDemonstration.parseStandardNotation === 'function') {
+            return this.gameDemonstration.parseStandardNotation(standardNotations);
         }
+        console.warn('GameDemonstration模块不可用，无法解析标准棋谱格式');
+        return null;
     }
 
-    // 更新棋谱步骤显示
+    // 更新棋谱步骤显示（委托给GameDemonstration）
     updateRecordStepsDisplay(gameMoves) {
-        const stepsList = document.getElementById('stepsList');
-        if (!stepsList) return;
-
-        // 清空现有步骤
-        stepsList.innerHTML = '';
-
-        // 添加每一步的显示
-        gameMoves.forEach((move, index) => {
-            // 正确的参数解构 - move数组的结构是 [color, pieceType, fromPos, toPos, notation]
-            const [color, pieceType, fromPos, toPos, notation] = move;
-            const [fromRow, fromCol] = fromPos;
-            const [toRow, toCol] = toPos;
-
-            const li = document.createElement('li');
-
-            // 创建更详细的步骤显示
-            const stepNumber = Math.floor(index / 2) + 1; // 一步红方，一步黑方
-            const isRedMove = index % 2 === 0;
-            const colorText = isRedMove ? '红' : '黑';
-
-            li.innerHTML = `
-                <span class="step-number">${stepNumber}${isRedMove ? '...' : ''}</span>
-                <span class="step-color ${color}">${colorText}</span>
-                <span class="step-notation">${notation || '无记录'}</span>
-            `;
-
-            li.className = 'step-item';
-            li.dataset.stepIndex = index;
-
-            // 添加点击事件，可以跳转到特定步骤
-            li.addEventListener('click', () => {
-                // 移除所有步骤的高亮
-                document.querySelectorAll('.step-item').forEach(item => {
-                    item.classList.remove('active');
-                });
-
-                // 高亮当前点击的步骤
-                li.classList.add('active');
-
-                // 执行跳转
-                this.playToStep(index);
-            });
-
-            stepsList.appendChild(li);
-        });
-
-        console.log(`已更新棋谱步骤显示，共${gameMoves.length}步`);
+        if (this.gameDemonstration && typeof this.gameDemonstration.updateRecordStepsDisplay === 'function') {
+            return this.gameDemonstration.updateRecordStepsDisplay(gameMoves);
+        }
+        console.warn('GameDemonstration模块不可用，无法更新棋谱步骤显示');
     }
 
     // 播放到特定步骤
@@ -2994,17 +2976,14 @@ notation: notation
             if (piece) {
                 console.log(`执行第${i + 1}步: ${move.pieceChar} ${move.notation} (${move.from.row},${move.from.col}) → (${move.to.row},${move.to.col})`);
 
-                // 执行移动
-                this.selectedPiece = piece;
-                this.movePiece(move.to.row, move.to.col);
-
-                // 更新当前玩家
-                this.currentPlayer = this.currentPlayer === 'red' ? 'black' : 'red';
+                // 使用演示模式专用移动方法
+                this.executeDemonstrationMove(piece, move.to.row, move.to.col, move.notation);
             } else {
                 console.warn(`在第${i + 1}步未找到棋子: ${move.pieceColor} ${move.pieceType} 在位置 (${move.from.row}, ${move.from.col})`);
             }
         }
 
+        // 更新状态
         this.updateStatus();
         console.log(`跳转完成，当前回合: ${this.currentPlayer === 'red' ? '红方' : '黑方'}`);
     }

@@ -29,6 +29,12 @@ global.window = dom.window;
 // 导入游戏类
 const { XiangqiGame } = require('../../main/chess.js');
 
+// 导入并设置模块用于测试
+const GameDemonstration = require('../../main/game-demonstration.js');
+const BoardRenderer = require('../../main/board-renderer.js');
+global.GameDemonstration = GameDemonstration;
+global.BoardRenderer = BoardRenderer;
+
 describe('棋谱播放演示功能测试', () => {
   let game;
 

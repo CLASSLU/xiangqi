@@ -384,14 +384,14 @@ button:active {
 
 .board {
     position: relative;
-    width: 560px;  /* 8 * 70px = 560px（内容大小）*/
-    height: 630px; /* 9 * 70px = 630px（内容大小）*/
-    background: #f4e6d0;
-    border: 4px solid #8b4513;
+    width: 560px;
+    height: 630px;
+    background: radial-gradient(circle at 30% 30%, #f8e9cc, #f2d6a3 65%, #e8c688);
+    border: 4px solid #8b5a2b;
     margin-bottom: 20px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-    border-radius: 8px;
-    box-sizing: content-box; /* 关键修复：使用content-box模型 */
+    box-shadow: 0 10px 24px rgba(0,0,0,0.35), inset 0 0 10px rgba(0,0,0,0.15);
+    border-radius: 10px;
+    box-sizing: content-box;
 }
 
 /* 移除CSS伪元素，改用JavaScript绘制 */
@@ -535,39 +535,45 @@ button:active {
 
 .piece {
     position: absolute;
-    width: 58px;  /* 扩大棋子尺寸适配70px格子 */
-    height: 58px; /* 扩大棋子尺寸适配70px格子 */
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 24px; /* 增大字体 */
-    font-weight: bold;
+    font-size: 22px;
+    font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s;
-    border: 3px solid #000; /* 增加边框宽度 */
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
     user-select: none;
-    /* 调整棋子位置，使其位于交叉点上 */
     transform: translate(-50%, -50%);
     z-index: 10;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    /* 立体外观 */
+    background: radial-gradient(ellipse at 30% 30%, rgba(255,255,255,0.9), rgba(255,255,255,0.6) 35%, rgba(0,0,0,0.1) 70%),
+                linear-gradient(145deg, #f0f0f0, #cfcfcf);
+    border: 2px solid rgba(0,0,0,0.4);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.35), inset 0 2px 4px rgba(255,255,255,0.6), inset 0 -2px 4px rgba(0,0,0,0.15);
+    text-shadow: 0 1px 0 rgba(255,255,255,0.6), 0 2px 4px rgba(0,0,0,0.25);
 }
 
 .piece.red {
-    background: linear-gradient(145deg, #ff6b6b, #d32f2f);
-    color: #fff;
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+    color: #b71c1c;
+    background: radial-gradient(ellipse at 30% 30%, rgba(255,255,255,0.95), rgba(255,200,200,0.8) 45%, rgba(255,150,150,0.6) 70%),
+                linear-gradient(145deg, #fff3f3, #ffd6d6);
+    border-color: rgba(183,28,28,0.7);
 }
 
 .piece.black {
-    background: linear-gradient(145deg, #2c3e50, #1a1a2e);
-    color: #fff;
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+    color: #1a1a1a;
+    background: radial-gradient(ellipse at 30% 30%, rgba(255,255,255,0.9), rgba(210,210,210,0.75) 45%, rgba(160,160,160,0.55) 70%),
+                linear-gradient(145deg, #f0f0f0, #cfcfcf);
+    border-color: rgba(26,26,26,0.6);
 }
 
 .piece.selected {
-    box-shadow: 0 0 15px #ffeb3b;
-    transform: translate(-50%, -50%) scale(1.1);
+    box-shadow: 0 10px 18px rgba(0,0,0,0.35), inset 0 2px 4px rgba(255,255,255,0.7), inset 0 -2px 4px rgba(0,0,0,0.2), 0 0 18px rgba(255,235,59,0.9);
+    transform: translate(-50%, -50%) scale(1.06);
+    filter: saturate(1.1);
 }
 
 .piece.valid-move {
@@ -869,16 +875,16 @@ button:active {
 
 @media (max-width: 600px) {
     .board {
-        width: 448px;  /* 调整为正确比例：64px×7格 = 448px */
-        height: 504px; /* 调整为正确比例：56px×9格 = 504px */
+        width: 448px;
+        height: 504px;
     }
     
     .piece {
-        width: 46px;   /* 缩小棋子 */
-        height: 46px;  /* 缩小棋子 */
-        font-size: 18px;
+        width: 44px;
+        height: 44px;
+        font-size: 16px;
     }
-    
+
     h1 {
         font-size: 2em;
     }
