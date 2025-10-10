@@ -245,6 +245,113 @@ export const throttle = (func, limit) => {
     };
 };
 
+// ==================== 安全DOM工具 ====================
+/**
+ * 安全地转义HTML特殊字符，防止XSS攻击
+ * @param {string} str - 要转义的字符串
+ * @returns {string} 转义后的安全字符串
+ */
+export const escapeHTML = (str) => {
+    if (!str || typeof str !== 'string') return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+};
+
+/**
+ * 安全地创建带有文本内容的DOM元素
+ * @param {string} tagName - 标签名
+ * @param {string} textContent - 文本内容
+ * @param {Object} attributes - 属性对象
+ * @returns {Element} DOM元素
+ */
+export const createTextElement = (tagName, textContent, attributes = {}) => {
+    const element = document.createElement(tagName);
+    if (textContent) {
+        element.textContent = escapeHTML(textContent);
+    }
+    Object.entries(attributes).forEach(([key, value]) => {
+        if (key === 'className') {
+            element.className = escapeHTML(value);
+        } else if (key === 'textContent') {
+            element.textContent = escapeHTML(value);
+        } else {
+            element.setAttribute(key, escapeHTML(String(value)));
+        }
+    });
+    return element;
+};
+
+/**
+ * 安全地创建游戏列表项元素
+ * @param {Object} gameData - 游戏数据
+ * @returns {Element} 游戏列表项元素
+ */
+export const createGameListItem = (title, info, count, attributes = {}) => {
+    const gameItem = document.createElement('div');
+    gameItem.className = 'game-item';
+    Object.assign(gameItem, attributes);
+
+    const titleEl = createTextElement('div', title, { className: 'game-title' });
+    const infoEl = createTextElement('div', info, { className: 'game-info' });
+    const countEl = createTextElement('span', `(${count}局)`, { className: 'game-count' });
+
+    gameItem.appendChild(titleEl);
+    gameItem.appendChild(infoEl);
+    gameItem.appendChild(countEl);
+
+    return gameItem;
+};
+
+/**
+ * 安全地创建详细的棋谱游戏项元素
+ * @param {Object} game - 游戏数据
+ * @param {number} index - 索引
+ * @param {Function} qualityColorFn - 获取质量颜色的函数
+ * @returns {Element} 游戏项元素
+ */
+export const createDetailedGameItem = (game, index, qualityColorFn) => {
+    const gameItem = document.createElement('div');
+    gameItem.className = 'game-item';
+
+    // 计算游戏信息
+    const qualityScore = game.qualityScore || game.classification?.score || 0;
+    const qualityLevel = game.classification?.levelText || '基础级';
+    const playersInfo = game.redPlayer && game.blackPlayer ?
+        `${game.redPlayer} vs ${game.blackPlayer}` : '选手信息未知';
+    const resultInfo = game.result ? `结果: ${game.result}` : '结果: 未知';
+    const eventInfo = game.event ? `赛事: ${game.event}` : '';
+    const dateInfo = game.date ? `日期: ${game.date}` : '';
+
+    // 创建标题元素
+    const titleEl = createTextElement('div', null, { className: 'game-title' });
+    titleEl.appendChild(createTextElement('span', game.title || `棋谱 ${index + 1}`));
+
+    const qualitySpan = createTextElement('span', qualityLevel, {
+        className: 'game-quality',
+        style: `background: ${qualityColorFn ? qualityColorFn(qualityScore) : '#ccc'}`
+    });
+    titleEl.appendChild(qualitySpan);
+
+    // 创建其他信息元素
+    const infoEl = createTextElement('div', playersInfo, { className: 'game-info' });
+    const resultEl = createTextElement('div', resultInfo, { className: 'game-meta' });
+    const eventDateEl = createTextElement('div', `${eventInfo} ${dateInfo}`.trim(), { className: 'game-meta' });
+    const movesEl = createTextElement('div',
+        `步数: ${game.moves ? game.moves.length : 0} | 质量: ${qualityScore}分`,
+        { className: 'game-moves' }
+    );
+
+    // 组装元素
+    gameItem.appendChild(titleEl);
+    gameItem.appendChild(infoEl);
+    gameItem.appendChild(resultEl);
+    gameItem.appendChild(eventDateEl);
+    gameItem.appendChild(movesEl);
+
+    return gameItem;
+};
+
 // ==================== 缓存工具 ====================
 /**
  * 创建LRU缓存
@@ -289,6 +396,154 @@ export const createLRUCache = (maxSize = 100) => {
             return cache.size;
         }
     };
+};
+
+// ==================== HTML安全工具 ====================
+/**
+ * HTML转义函数，防止XSS攻击
+ * @param {string} unsafeText - 需要转义的文本
+ * @returns {string} 转义后的安全文本
+ */
+export const escapeHTML = (unsafeText) => {
+    if (typeof unsafeText !== 'string') {
+        return String(unsafeText || '');
+    }
+
+    return unsafeText
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+};
+
+/**
+ * 安全地创建DOM元素并设置内容
+ * @param {string} tagName - 标签名
+ * @param {Object} options - 配置选项
+ * @param {string} options.text - 文本内容（会被转义）
+ * @param {string} options.className - CSS类名
+ * @param {Object} options.attributes - 属性对象
+ * @param {Array} options.children - 子元素数组
+ * @returns {Element} DOM元素
+ */
+export const createGameElement = (tagName, options = {}) => {
+    if (!isBrowser()) {
+        // 测试环境返回模拟对象
+        const mockElement = {
+            tagName: tagName.toUpperCase(),
+            className: options.className || '',
+            textContent: options.text || '',
+            dataset: {},
+            style: {},
+            classList: {
+                add: () => {},
+                remove: () => {},
+                contains: () => false
+            },
+            addEventListener: () => {},
+            removeEventListener: () => {},
+            appendChild: () => {},
+            remove: () => {},
+            setAttribute: () => {},
+            getAttribute: () => null,
+            innerHTML: ''
+        };
+
+        if (options.attributes) {
+            mockElement.dataset = { ...options.attributes };
+        }
+
+        return mockElement;
+    }
+
+    const element = document.createElement(tagName);
+
+    // 设置类名
+    if (options.className) {
+        element.className = options.className;
+    }
+
+    // 安全地设置文本内容
+    if (options.text !== undefined) {
+        element.textContent = options.text;
+    }
+
+    // 设置属性
+    if (options.attributes) {
+        Object.entries(options.attributes).forEach(([key, value]) => {
+            if (key.startsWith('data-')) {
+                element.dataset[key.substring(5)] = value;
+            } else {
+                element.setAttribute(key, value);
+            }
+        });
+    }
+
+    // 添加子元素
+    if (options.children && Array.isArray(options.children)) {
+        options.children.forEach(child => {
+            if (child instanceof Element) {
+                element.appendChild(child);
+            } else if (typeof child === 'string') {
+                element.appendChild(document.createTextNode(child));
+            }
+        });
+    }
+
+    return element;
+};
+
+/**
+ * 安全地创建带多个子元素的DOM结构
+ * @param {string} parentTagName - 父元素标签名
+ * @param {Array} childrenSpecs - 子元素规格数组
+ * @param {Object} parentOptions - 父元素配置
+ * @returns {Element} 父DOM元素
+ */
+export const createGameElementWithChildren = (parentTagName, childrenSpecs = [], parentOptions = {}) => {
+    const parent = createGameElement(parentTagName, parentOptions);
+
+    childrenSpecs.forEach(childSpec => {
+        if (typeof childSpec === 'string') {
+            // 纯文本内容
+            parent.appendChild(document.createTextNode(childSpec));
+        } else if (childSpec && typeof childSpec === 'object') {
+            // 子元素规格
+            const child = createGameElement(
+                childSpec.tagName,
+                {
+                    text: childSpec.text,
+                    className: childSpec.className,
+                    attributes: childSpec.attributes,
+                    children: childSpec.children
+                }
+            );
+            parent.appendChild(child);
+        }
+    });
+
+    return parent;
+};
+
+/**
+ * 安全地设置元素的HTML内容，支持模板字符串但会转义动态内容
+ * @param {Element} element - 目标元素
+ * @param {string} template - HTML模板字符串（支持静态HTML）
+ * @param {Object} dynamicData - 需要转义的动态数据对象
+ * @returns {void}
+ */
+export const setSafeHTML = (element, template, dynamicData = {}) => {
+    if (!element || !isBrowser()) return;
+
+    // 替换模板中的动态内容并转义
+    let safeHTML = template;
+    Object.entries(dynamicData).forEach(([key, value]) => {
+        const placeholder = new RegExp(`\\$\\{${key}\\}`, 'g');
+        safeHTML = safeHTML.replace(placeholder, escapeHTML(value));
+    });
+
+    element.innerHTML = safeHTML;
 };
 
 // ==================== 棋谱工具 ====================
@@ -344,6 +599,25 @@ export default {
     debounce,
     throttle,
     createLRUCache,
+    escapeHTML,
+    createTextElement,
+    createGameListItem,
+    createDetailedGameItem,
+    createGameElement,
+    createGameElementWithChildren,
+    setSafeHTML,
     validateMoveStructure,
     createMove
 };
+
+// ==================== 导出到window对象 ====================
+// 为script标签加载方式提供全局访问
+if (typeof window !== 'undefined') {
+    window.escapeHTML = escapeHTML;
+    window.createTextElement = createTextElement;
+    window.createGameListItem = createGameListItem;
+    window.createDetailedGameItem = createDetailedGameItem;
+    window.createGameElement = createGameElement;
+    window.createGameElementWithChildren = createGameElementWithChildren;
+    window.setSafeHTML = setSafeHTML;
+}

@@ -1,6 +1,9 @@
 // chess.js
 // 中国象棋游戏主类
 
+// ==================== 模块导入 ====================
+// 安全DOM工具函数将在window对象中可用（通过script标签加载）
+
 // ==================== 工具函数引用 ====================
 // 工具函数已移动到相应模块中实现：
 // - getPieceAt: GameState.pieceIndex.get(key) (O(1)查找)
@@ -2110,10 +2113,8 @@ class XiangqiGame {
                 const seriesButton = document.createElement('button');
                 seriesButton.className = 'record-btn series-btn';
                 seriesButton.setAttribute('data-series', series.name);
-                seriesButton.innerHTML = `
-                    ${series.name}
-                    <span class="game-count">(${series.count}局)</span>
-                `;
+                seriesButton.appendChild(window.createTextElement('span', series.name));
+                seriesButton.appendChild(window.createTextElement('span', `(${series.count}局)`, { className: 'game-count' }));
                 
                 seriesButton.addEventListener('click', () => {
                     console.log(`点击系列: ${series.name}, 包含 ${series.count} 个棋谱`);
@@ -2197,18 +2198,11 @@ class XiangqiGame {
                     const qualityScore = game.qualityScore || game.classification?.score || 0;
                     const qualityLevel = game.classification?.levelText || '基础级';
                     
-                    gameItem.innerHTML = `
-                        <div class="game-title">
-                            ${game.title || `棋谱 ${index + 1}`}
-                            <span class="game-quality" style="background: ${this.getQualityColor(qualityScore)}">
-                                ${qualityLevel}
-                            </span>
-                        </div>
-                        <div class="game-info">${playersInfo}</div>
-                        <div class="game-meta">${resultInfo}</div>
-                        <div class="game-meta">${eventInfo} ${dateInfo}</div>
-                        <div class="game-moves">步数: ${game.moves ? game.moves.length : 0} | 质量: ${qualityScore}分</div>
-                    `;
+                    gameItem.innerHTML = '';
+                    const newGameItem = window.createDetailedGameItem(game, index, this.getQualityColor.bind(this));
+                    while (newGameItem.firstChild) {
+                        gameItem.appendChild(newGameItem.firstChild);
+                    }
                     
                     gameItem.addEventListener('click', () => {
                         this.loadScrapedGameFromSeries(game);
