@@ -235,6 +235,16 @@ class ChessNotationParser {
     calculateTargetPosition(fromPos, action, toInfo, color, pieceType) {
         let toRow, toCol;
 
+        // 首先验证起始位置的合法性
+        if (fromPos.row < 0 || fromPos.row > 9 || fromPos.col < 0 || fromPos.col > 8) {
+            throw new Error(`起始位置超出棋盘范围: (${fromPos.row}, ${fromPos.col})`);
+        }
+
+        // 验证toInfo参数的合法性
+        if (typeof toInfo !== 'number' || toInfo < 0 || toInfo > 9) {
+            throw new Error(`无效的目标参数: ${toInfo}`);
+        }
+
         if (action === '平') {
             // 横向移动：toInfo表示目标路码
             toCol = this.roadToColumn(color, toInfo);
@@ -261,8 +271,12 @@ class ChessNotationParser {
                     toRow = color === 'red' ? fromPos.row + (fromPos.row - toRow) : fromPos.row - (toRow - fromPos.row);
                 }
             } else if (pieceType === 'rook' || pieceType === 'cannon' || pieceType === 'soldier') {
-                // 车、炮、兵：toInfo表示步数
+                // 车、炮、兵：toInfo表示步数，强化边界检查
                 const steps = toInfo;
+                if (steps < 0 || steps > 9) {
+                    throw new Error(`无效的移动步数: ${steps}`);
+                }
+
                 if (color === 'red') {
                     // 红方：进是行号减少，退是行号增加
                     toRow = action === '进' ? fromPos.row - steps : fromPos.row + steps;
@@ -286,7 +300,7 @@ class ChessNotationParser {
                     throw new Error('象的移动规则错误');
                 }
             } else if (pieceType === 'advisor' || pieceType === 'king') {
-                // 士、将：“一进一”等不同格式
+                // 士、将："一进一"等不同格式
                 // "帅五进一"：第5路，前进1步（列移动1步）
                 // "帅五平六"：第5路，平移到第6路（列移动到6，行不变）
 
@@ -296,6 +310,10 @@ class ChessNotationParser {
                     toRow = fromPos.row; // 行数不变
                 } else {
                     // "进"或"退"
+                    if (toInfo > 3) {
+                        throw new Error(`将/士移动步数过大: ${toInfo}`);
+                    }
+
                     // 区分两种模式：步进移动 或 斜对角线移动（可通过路码变化判断）
                     const targetCol = this.roadToColumn(color, toInfo);
                     const colDiff = Math.abs(targetCol - fromPos.col);
@@ -323,6 +341,10 @@ class ChessNotationParser {
             } else {
                 // 默认处理：toInfo表示步数
                 const steps = toInfo;
+                if (steps < 0 || steps > 9) {
+                    throw new Error(`无效的移动步数: ${steps}`);
+                }
+
                 if (color === 'red') {
                     toRow = action === '进' ? fromPos.row - steps : fromPos.row + steps;
                 } else {
@@ -332,17 +354,9 @@ class ChessNotationParser {
             }
         }
 
-        // 验证目标位置是否在棋盘内（带容错处理）
+        // 严格的边界检查 - 不再进行容错调整，而是直接报错
         if (toRow < 0 || toRow > 9 || toCol < 0 || toCol > 8) {
-            // 容错处理：将目标位置调整到棋盘边界
-            const adjustedRow = Math.max(0, Math.min(9, toRow));
-            const adjustedCol = Math.max(0, Math.min(8, toCol));
-
-            if (adjustedRow !== toRow || adjustedCol !== toCol) {
-                console.log(`   ⚠️  目标位置(${toRow},${toCol})超出棋盘，调整到(${adjustedRow},${adjustedCol})`);
-                toRow = adjustedRow;
-                toCol = adjustedCol;
-            }
+            throw new Error(`目标位置(${toRow},${toCol})超出棋盘范围 - 棋谱: ${color} ${pieceType} ${action}${toInfo}`);
         }
 
         return {
