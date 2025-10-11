@@ -1,0 +1,74 @@
+{
+  "compilerOptions": {
+    /* 基础配置 */
+    "target": "ES2020",
+    "module": "ES6",
+    "moduleResolution": "node",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+
+    /* 严格类型检查 */
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": true,
+
+    /* 模块解析 */
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+
+    /* 输出配置 */
+    "outDir": "./dist",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "removeComments": false,
+    "preserveConstEnums": true,
+
+    /* 代码质量 */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "skipLibCheck": true,
+    "incremental": true,
+
+    /* 路径映射 */
+    "baseUrl": "./",
+    "paths": {
+      "/*": ["./main/*"],
+      "@types/*": ["./main/*"],
+      "@/types": ["./main/types"],
+      "@/utils": ["./main/utils"]
+    }
+  },
+
+  /* 包含的文件 */
+  "include": [
+    "./main/**/*.ts",
+    "./main/**/*.js",
+    "./types.d.ts"
+  ],
+
+  /* 排除的文件 */
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "test/**/*"
+  ],
+
+  /* 渐进式配置 */
+  "ts-node": {
+    "esm": true,
+    "experimentalSpecifierResolution": "node"
+  }
+}
