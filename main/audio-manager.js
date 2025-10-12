@@ -15,14 +15,53 @@ exports.AudioManager = void 0;
  * 音频管理器
  */
 class AudioManager {
-    constructor(config = {
-        enabled: true,
-        volume: 0.7,
-        muted: false
-    }) {
+    constructor(config = {}) {
         this.audioContext = null;
-        this.config = config;
+
+        // 默认配置
+        this.config = {
+            enabled: config.enabled !== false,
+            volume: config.volume || 0.7,
+            muted: config.muted || false
+        };
+
+        // 兼容性属性
+        this.isEnabled = this.config.enabled;
+        this.musicVolume = config.musicVolume || 0.3;
+        this.effectVolume = config.effectVolume || 0.6;
+
+        // 音效缓存
+        this.sounds = this.generateSounds();
+
         this.initializeAudio();
+    }
+
+    /**
+     * 生成音效
+     * @returns {Object} 音效对象
+     */
+    generateSounds() {
+        return {
+            pieceMove: this.generate木质音效('pieceMove'),
+            pieceCapture: this.generate木质音效('pieceCapture'),
+            pieceSelect: this.generate木质音效('pieceSelect'),
+            check: this.generate木质音效('check'),
+            victory: this.generate木质音效('victory')
+        };
+    }
+
+    /**
+     * 生成木质音效
+     * @param {string} type - 音效类型
+     * @returns {Object} 音效数据
+     */
+    generate木质音效(type) {
+        return {
+            type: type,
+            duration: 0.2,
+            frequency: type === 'victory' ? 800 : 400,
+            buffer: null
+        };
     }
     /**
      * 初始化音频系统
@@ -61,6 +100,46 @@ class AudioManager {
      */
     toggleMute() {
         this.config.muted = !this.config.muted;
+    }
+
+    /**
+     * 设置音乐音量
+     * @param {number} volume - 音乐音量 (0-1)
+     */
+    setMusicVolume(volume) {
+        this.musicVolume = Math.max(0, Math.min(1, volume));
+        this.config.volume = this.musicVolume;
+    }
+
+    /**
+     * 设置音效音量
+     * @param {number} volume - 音效音量 (0-1)
+     */
+    setEffectVolume(volume) {
+        this.effectVolume = Math.max(0, Math.min(1, volume));
+    }
+
+    /**
+     * 切换音效开关 (兼容性方法)
+     * @returns {boolean} 当前状态
+     */
+    toggleSound() {
+        this.isEnabled = !this.isEnabled;
+        this.config.enabled = this.isEnabled;
+        return this.isEnabled;
+    }
+
+    /**
+     * 获取状态
+     * @returns {Object} 当前状态
+     */
+    getStatus() {
+        return {
+            enabled: this.isEnabled,
+            musicVolume: this.musicVolume,
+            effectVolume: this.effectVolume,
+            muted: this.config.muted
+        };
     }
     /**
      * 获取配置

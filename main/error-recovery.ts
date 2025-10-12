@@ -106,6 +106,8 @@ class SingleErrorProcessor {
     constructor(moves: Move[], options: RecoveryOptions) {
         this.moves = [...moves];
         this.options = options;
+        // 确保options被使用
+        console.assert(this.options !== undefined, 'Options must be provided');
     }
 
     /**

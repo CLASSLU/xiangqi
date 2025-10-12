@@ -10,7 +10,7 @@
  * @since 2024-10-12
  */
 
-import type { Move, GameState } from './types';
+import type { Move } from './types';
 
 /**
  * 游戏模式枚举
