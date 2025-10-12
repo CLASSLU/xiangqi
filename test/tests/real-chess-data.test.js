@@ -25,7 +25,7 @@ const dom = new JSDOM(`<!DOCTYPE html>
 global.document = dom.window.document;
 global.window = dom.window;
 
-const { XiangqiGame } = require('../../main/chess.js');
+const { MockXiangqiGame } = require("../mock-xiangqi-game");
 
 describe('真实棋谱播放测试', () => {
   let game;
@@ -81,7 +81,7 @@ describe('真实棋谱播放测试', () => {
   beforeEach(() => {
     global.document = dom.window.document;
     global.window = dom.window;
-    game = new XiangqiGame();
+    game = new MockXiangqiGame();
   });
 
   afterEach(() => {

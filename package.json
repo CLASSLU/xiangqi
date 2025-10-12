@@ -1,0 +1,46 @@
+{
+  "name": "xiangqi-chess-game",
+  "version": "2.1.0",
+  "description": "中国象棋游戏 - TypeScript版本",
+  "main": "main/xiangqi-game.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "build:clean": "rm -rf dist && tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint main/**/*.ts",
+    "lint:fix": "eslint main/**/*.ts --fix",
+    "test": "cd test && npm test",
+    "start": "python -m http.server 8000",
+    "postbuild": "echo 'TypeScript compilation completed'"
+  },
+  "keywords": [
+    "xiangqi",
+    "chess",
+    "chinese-chess",
+    "typescript",
+    "game",
+    "browser",
+    "zero-dependencies"
+  ],
+  "author": "Claude Code Review System",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.7.2",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "browserslist": [
+    "last 2 versions",
+    "not dead"
+  ]
+}

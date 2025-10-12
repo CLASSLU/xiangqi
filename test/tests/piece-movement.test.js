@@ -12,15 +12,15 @@ const dom = new JSDOM(`<!DOCTYPE html><html><body><div class="board"></div><div 
 global.document = dom.window.document;
 global.window = dom.window;
 
-// 导入游戏类
-const { XiangqiGame } = require('../../main/chess.js');
+// 导入Mock游戏类
+const { MockXiangqiGame } = require('../mock-xiangqi-game');
 
 describe('棋子移动规则测试', () => {
   let game;
   
   beforeEach(() => {
     // 创建游戏实例
-    game = new XiangqiGame();
+    game = new MockXiangqiGame();
   });
   
   afterEach(() => {

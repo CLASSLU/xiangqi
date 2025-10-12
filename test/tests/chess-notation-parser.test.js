@@ -2,7 +2,7 @@
  * 棋谱解析器测试
  */
 
-const ChessNotationParser = require('../../main/chess-notation-parser');
+const { ChessNotationParser } = require('../../main/chess-notation-parser');
 
 describe('ChessNotationParser 测试', () => {
     let parser;

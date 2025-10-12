@@ -1,255 +1,242 @@
+"use strict";
 /**
- * Error Recovery - 简化的错误恢复系统
+ * ErrorRecovery - 错误恢复系统
  *
- * 从原来的573行error-recovery-system.js简化而来
- * 专注于核心错误恢复功能，移除过度工程化
+ * 提供棋谱数据错误恢复和修复功能
  *
- * @fileoverview 简化错误恢复器
+ * @fileoverview 错误恢复系统
  * @version 2.1.0
  * @author Claude Code Review System
  * @since 2024-10-11
  */
-
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ErrorRecovery = void 0;
 /**
- * @typedef {import('./types').ValidationError} ValidationError
- * @typedef {import('./types').ChessGameData} ChessGameData
- * @typedef {import('./types').Move} Move
- */
-
-/**
- * 简化的错误恢复器
- * 实用性强，易于维护
+ * 错误恢复系统
  */
 class ErrorRecovery {
-    constructor() {
-        this.recoveryStrategies = {
-            // 核心恢复策略
-            autoFix: new AutoFixStrategy(),
-            skipMove: new SkipMoveStrategy(),
-            // 数据修复策略
-            repairNotation: new RepairNotationStrategy(),
-            normalizePositions: new NormalizePositionsStrategy()
-        };
-    }
-
     /**
-     * 尝试恢复错误数据
+     * 执行错误恢复
+     * @param {Move[]} originalMoves - 原始移动数组
      * @param {ValidationError[]} errors - 错误列表
-     * @param {ChessGameData|Move[]} data - 原始数据
-     * @returns {Object} 恢复结果 {success: boolean, data: any, report: string}
+     * @param {RecoveryOptions} options - 恢复选项
+     * @returns {RecoveryResult} 恢复结果
      */
-    async recover(errors, data) {
-        if (!errors || errors.length === 0) {
-            return { success: true, data, report: '无需恢复处理' };
-        }
-
-        const report = ['开始错误恢复...'];
-        let recoveredData = data;
-        let success = false;
-
-        // 按优先级尝试恢复策略
-        const strategies = ['skipMove', 'autoFix', 'repairNotation', 'normalizePositions'];
-
-        for (const strategyName of strategies) {
-            const strategy = this.recoveryStrategies[strategyName];
-
-            if (strategy.canHandle(errors)) {
-                try {
-                    const result = await strategy.execute(recoveredData, errors);
-
-                    if (result.success) {
-                        recoveredData = result.data;
-                        success = true;
-                        report.push(`✅ ${strategyName} 策略成功`);
-                        break;
-                    } else {
-                        report.push(`❌ ${strategyName} 策略失败: ${result.error}`);
+    recoverFromErrors(originalMoves, errors, options = {
+        autoFix: true,
+        faultTolerant: true,
+        preserveSequence: true,
+        maxRecoveryAttempts: 3
+    }) {
+        const result = {
+            originalMoves: [...originalMoves],
+            recoveredMoves: [...originalMoves],
+            successfulRecoveries: [],
+            failedRecoveries: [],
+            skippedMoves: [],
+            qualityScore: 100,
+            recoveryReport: null
+        };
+        try {
+            // 逐个处理错误
+            for (const error of errors) {
+                const recoveryAction = this.attemptRecovery(error, result.recoveredMoves, options);
+                if (recoveryAction.success) {
+                    result.successfulRecoveries.push(recoveryAction);
+                    // 更新恢复后的移动数组
+                    result.recoveredMoves = [...recoveryAction.moves];
+                }
+                else {
+                    result.failedRecoveries.push(recoveryAction);
+                    if (error.moveIndex >= 0) {
+                        result.skippedMoves.push(error.moveIndex);
                     }
-                } catch (error) {
-                    report.push(`⚠️ ${strategyName} 策略异常: ${error.message}`);
                 }
             }
+            // 计算质量分数
+            result.qualityScore = this.calculateQualityScore(result);
+            // 生成恢复报告
+            result.recoveryReport = this.generateRecoveryReport(result);
         }
-
-        if (!success) {
-            report.push('🔒 所有恢复策略均失败，返回原始数据');
+        catch (error) {
+            console.error('错误恢复过程中发生异常:', error);
+            result.recoveredMoves = originalMoves; // 回滚到原始数据
         }
-
-        return {
-            success,
-            data: recoveredData,
-            report: report.join('\n')
-        };
+        return result;
     }
-
     /**
      * 获取错误严重程度
      * @param {ValidationError[]} errors - 错误列表
-     * @returns {string} 严重程度: 'low', 'medium', 'high', 'critical'
+     * @returns {string} 最高严重程度
      */
     getErrorSeverity(errors) {
-        if (!errors || errors.length === 0) return 'low';
-
-        const severityCount = { critical: 0, high: 0, medium: 0, low: 0 };
-
-        errors.forEach(error => {
-            const severity = error.severity || 'medium';
-            severityCount[severity]++;
-        });
-
-        if (severityCount.critical > 0) return 'critical';
-        if (severityCount.high > 0) return 'high';
-        if (severityCount.medium > 2) return 'high';
-        if (severityCount.medium > 0) return 'medium';
+        if (errors.length === 0)
+            return 'none';
+        const severityLevels = ['low', 'medium', 'high', 'critical'];
+        for (const level of severityLevels.slice().reverse()) { // 从高到低检查
+            if (errors.some(error => error.severity === level)) {
+                return level;
+            }
+        }
         return 'low';
     }
-}
-
-/**
- * 自动修复策略
- */
-class AutoFixStrategy {
-    canHandle(errors) {
-        return errors.some(e => e.code === 'INVALID_POSITION' || e.code === 'INVALID_COLOR');
-    }
-
-    async execute(data, errors) {
+    /**
+     * 尝试恢复单个错误
+     * @private
+     * @param {ValidationError} error - 错误信息
+     * @param {Move[]} currentMoves - 当前移动数组
+     * @param {RecoveryOptions} options - 恢复选项
+     */
+    attemptRecovery(error, currentMoves, _options) {
+        let action = {
+            success: false,
+            originalError: error,
+            moves: [...currentMoves],
+            action: 'unknown',
+            message: '',
+            recommendation: 'continue'
+        };
         try {
-            if (Array.isArray(data)) {
-                const fixedData = data.map(item => this.fixItem(item, errors));
-                return { success: true, data: fixedData };
-            } else {
-                const fixedData = this.fixItem(data, errors);
-                return { success: true, data: fixedData };
+            switch (error.code) {
+                case 'MISSING_REQUIRED_FIELD':
+                    action = this.recoverMissingField(error, currentMoves);
+                    break;
+                case 'INVALID_POSITION_FORMAT':
+                    action = this.recoverPositionFormat(error, currentMoves);
+                    break;
+                case 'INVALID_MOVE_SEQUENCE':
+                    action = this.recoverSequenceError(error, currentMoves);
+                    break;
+                default:
+                    action.message = `未知错误类型: ${error.code}`;
+                    action.recommendation = 'skip';
+                    break;
             }
-        } catch (error) {
-            return { success: false, error: error.message };
         }
+        catch (recoveryError) {
+            action.message = `恢复过程失败: ${recoveryError instanceof Error ? recoveryError.message : '未知错误'}`;
+            action.recommendation = 'skip';
+        }
+        return action;
     }
-
-    fixItem(item, errors) {
-        const fixed = { ...item || {} };
-
-        // 修复位置格式
-        if (fixed.fromPos && Array.isArray(fixed.fromPos)) {
-            fixed.fromPos = { row: fixed.fromPos[0], col: fixed.fromPos[1] };
-        }
-        if (fixed.toPos && Array.isArray(fixed.toPos)) {
-            fixed.toPos = { row: fixed.toPos[0], col: fixed.toPos[1] };
-        }
-
-        // 修复颜色默认值
-        if (!fixed.color && ['red', 'black'].includes(fixed.pieceColor)) {
-            fixed.color = fixed.pieceColor;
-        } else if (!fixed.color) {
-            fixed.color = 'red';
-        }
-
-        return fixed;
-    }
-}
-
-/**
- * 跳过策略
- */
-class SkipMoveStrategy {
-    canHandle(errors) {
-        return errors.length > 5; // 错误过多时跳过
-    }
-
-    async execute(data, errors) {
-        try {
-            if (Array.isArray(data)) {
-                // 过滤掉有严重错误的项
-                const validData = data.filter((item, index) => {
-                    return !errors.some(e => e.moveIndex === index && e.severity === 'critical');
-                });
-                return { success: true, data: validData };
-            } else {
-                return { success: false, error: '单个数据无法跳过' };
+    /**
+     * 恢复缺失字段错误
+     * @private
+     */
+    recoverMissingField(error, currentMoves) {
+        const action = {
+            success: false,
+            originalError: error,
+            moves: [...currentMoves],
+            action: 'field_repair',
+            message: '',
+            recommendation: 'continue'
+        };
+        if (error.moveIndex >= 0 && error.moveIndex < currentMoves.length) {
+            const move = currentMoves[error.moveIndex];
+            // 尝试修复缺失字段
+            if (!move.notation) {
+                move.notation = this.generateDefaultNotation(move);
+                action.success = true;
+                action.message = `已生成默认记谱: ${move.notation}`;
             }
-        } catch (error) {
-            return { success: false, error: error.message };
-        }
-    }
-}
-
-/**
- * 记谱法修复策略
- */
-class RepairNotationStrategy {
-    canHandle(errors) {
-        return errors.some(e => e.code === 'MISSING_NOTATION' || e.code === 'INVALID_NOTATION');
-    }
-
-    async execute(data, errors) {
-        try {
-            const repairNotation = (item) => {
-                const fixed = { ...item };
-                if (!fixed.notation || fixed.notation.trim() === '') {
-                    fixed.notation = `${fixed.pieceType || 'unknown'} ${fixed.color || 'red'}`;
-                }
-                return fixed;
-            };
-
-            if (Array.isArray(data)) {
-                const fixedData = data.map(repairNotation);
-                return { success: true, data: fixedData };
-            } else {
-                const fixedData = repairNotation(data);
-                return { success: true, data: fixedData };
+            if (action.success) {
+                action.moves = [...currentMoves];
             }
-        } catch (error) {
-            return { success: false, error: error.message };
         }
+        return action;
     }
-}
-
-/**
- * 位置标准化策略
- */
-class NormalizePositionsStrategy {
-    canHandle(errors) {
-        return errors.some(e => e.code === 'INVALID_POSITION');
+    /**
+     * 恢复位置格式错误
+     * @private
+     */
+    recoverPositionFormat(error, currentMoves) {
+        const action = {
+            success: false,
+            originalError: error,
+            moves: [...currentMoves],
+            action: 'position_repair',
+            message: '',
+            recommendation: 'continue'
+        };
+        // 简化的位置恢复逻辑
+        action.message = '位置格式错误无法自动修复';
+        action.recommendation = 'skip';
+        return action;
     }
-
-    async execute(data, errors) {
-        try {
-            const normalizePosition = (pos) => {
-                if (typeof pos === 'string') {
-                    const parts = pos.split(/[,，]/);
-                    if (parts.length === 2) {
-                        const row = parseInt(parts[0].trim());
-                        const col = parseInt(parts[1].trim());
-                        if (!isNaN(row) && !isNaN(col)) {
-                            return { row, col };
-                        }
-                    }
-                }
-                return pos;
-            };
-
-            const normalizeItem = (item) => {
-                const fixed = { ...item };
-                if (fixed.fromPos) fixed.fromPos = normalizePosition(fixed.fromPos);
-                if (fixed.toPos) fixed.toPos = normalizePosition(fixed.toPos);
-                return fixed;
-            };
-
-            if (Array.isArray(data)) {
-                const fixedData = data.map(normalizeItem);
-                return { success: true, data: fixedData };
-            } else {
-                const fixedData = normalizeItem(data);
-                return { success: true, data: fixedData };
-            }
-        } catch (error) {
-            return { success: false, error: error.message };
+    /**
+     * 恢复序列错误
+     * @private
+     */
+    recoverSequenceError(error, currentMoves) {
+        const action = {
+            success: false,
+            originalError: error,
+            moves: [...currentMoves],
+            action: 'sequence_repair',
+            message: '',
+            recommendation: 'continue'
+        };
+        // 简化的序列恢复逻辑
+        action.message = '序列错误修复暂未实现';
+        action.recommendation = 'skip';
+        return action;
+    }
+    /**
+     * 生成默认记谱
+     * @private
+     */
+    generateDefaultNotation(move) {
+        return `${move.pieceType}-${move.fromPos?.row || 0},${move.fromPos?.col || 0}-to-${move.toPos?.row || 0},${move.toPos?.col || 0}`;
+    }
+    /**
+     * 计算质量分数
+     * @private
+     */
+    calculateQualityScore(result) {
+        // 基础分数减去失败恢复的影响
+        let score = 100;
+        score -= result.failedRecoveries.length * 10; // 每个失败恢复扣10分
+        score += result.successfulRecoveries.length * 5; // 每个成功恢复加5分
+        return Math.max(0, Math.min(100, score));
+    }
+    /**
+     * 生成恢复报告
+     * @private
+     */
+    generateRecoveryReport(result) {
+        const summary = {
+            totalMoves: result.originalMoves.length,
+            recoveredMoves: result.recoveredMoves.length,
+            successRate: result.originalMoves.length > 0
+                ? (result.successfulRecoveries.length / result.originalMoves.length) * 100
+                : 0,
+            qualityScore: result.qualityScore
+        };
+        const details = {
+            successful: result.successfulRecoveries.map(r => ({
+                action: r.action,
+                message: r.message,
+                errorType: r.originalError.code
+            })),
+            failed: result.failedRecoveries.map(r => ({
+                errorType: r.originalError.code,
+                message: r.message
+            }))
+        };
+        const recommendations = [];
+        if (result.failedRecoveries.length > 0) {
+            recommendations.push('建议检查失败的错误和对应的移动数据');
         }
+        if (result.qualityScore < 80) {
+            recommendations.push('建议手动验证恢复后的数据质量');
+        }
+        return {
+            summary,
+            recoveries: details,
+            recommendations
+        };
     }
 }
-
-// 导出模块
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { ErrorRecovery, AutoFixStrategy, SkipMoveStrategy, RepairNotationStrategy, NormalizePositionsStrategy };
-}
+exports.ErrorRecovery = ErrorRecovery;
+//# sourceMappingURL=error-recovery.js.map

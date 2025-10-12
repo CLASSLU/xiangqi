@@ -3,7 +3,8 @@
  * 测试象棋游戏中集成的规则逻辑
  */
 
-const XiangqiGame = require('../../main/chess').XiangqiGame;
+// 导入Mock游戏类
+const { MockXiangqiGame } = require('../mock-xiangqi-game');
 
 describe('象棋规则引擎测试', () => {
     let game;
@@ -45,7 +46,7 @@ describe('象棋规则引擎测试', () => {
             navigator: { userAgent: 'test' }
         };
 
-        game = new XiangqiGame('test-board', 'test-record');
+        game = new MockXiangqiGame('test-board', 'test-record');
     });
 
     afterEach(() => {

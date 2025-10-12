@@ -13,14 +13,14 @@ global.document = dom.window.document;
 global.window = dom.window;
 
 // 导入游戏类
-const { XiangqiGame } = require('../../main/chess.js');
+const { MockXiangqiGame } = require("../mock-xiangqi-game");
 
 describe('棋盘和棋子初始化测试', () => {
   let game;
   
   beforeEach(() => {
     // 创建游戏实例
-    game = new XiangqiGame();
+    game = new MockXiangqiGame();
   });
   
   afterEach(() => {

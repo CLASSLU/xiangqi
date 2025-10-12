@@ -19,7 +19,7 @@ export type PieceType =
   | '帥' | '将'  // 帅/将
   | '仕' | '士'  // 仕/士
   | '相' | '象'  // 相/象
-  | '马'         // 马
+  | '马' | '馬'   // 马
   | '車' | '车'  // 車/车
   | '炮' | '砲'  // 炮/砲
   | '兵' | '卒'  // 兵/卒
@@ -103,16 +103,16 @@ export interface ValidationResult {
   totalMoves: number;
   validMoves: number;
   errorMoves: number;
-  errors: ValidationError[];
+  errors: ValidationErrorInterface[];
   warnings: ValidationWarning[];
   layerStatistics?: Record<string, LayerStatistics>;
   normalizedMoves?: Move[];
 }
 
 /**
- * 验证错误
+ * 验证错误接口
  */
-export interface ValidationError {
+export interface ValidationErrorInterface {
   code: string;
   message: string;
   moveIndex: number;
@@ -171,7 +171,7 @@ export interface RecoveryResult {
  */
 export interface RecoveryAction {
   success: boolean;
-  originalError: ValidationError;
+  originalError: ValidationErrorInterface;
   moves: Move[];
   action: string;
   message: string;
@@ -325,6 +325,139 @@ export interface GameConfig {
   validation: ValidationOptions;
 }
 
+// ==================== 性能缓存类型 ====================
+/**
+ * 性能缓存统计信息
+ */
+export interface CacheStats {
+  positionCacheSize: number;
+  moveCacheSize: number;
+}
+
+/**
+ * 性能缓存接口
+ */
+export interface IPerformanceCache {
+  positionCache(position: Position, result?: ChessPiece | null): ChessPiece | null;
+  moveCache(key: string, result?: boolean): boolean | undefined;
+  clear(): void;
+  getStats(): CacheStats;
+}
+
+// ==================== 引擎配置类型 ====================
+/**
+ * 引擎基础配置选项
+ */
+export interface BaseEngineOptions {
+  cache?: IPerformanceCache | null;
+}
+
+/**
+ * 验证器配置选项
+ */
+export interface ValidatorConfig {
+  cache?: IPerformanceCache | null;
+}
+
+/**
+ * UI配置选项
+ */
+export interface UIConfig {
+  cache?: IPerformanceCache | null;
+  security?: SecurityManager | null;
+}
+
+/**
+ * 安全管理器接口
+ */
+export interface SecurityManager {
+  sanitizeInput(input: string): string;
+  validateData(data: unknown): boolean;
+  logSecurityEvent(event: string, data: unknown): void;
+}
+
+// ==================== 音频类型扩展 ====================
+/**
+ * 音频管理器接口
+ */
+export interface IAudioManager {
+  playSound(type: SoundType): void;
+  setVolume(volume: number): void;
+  mute(): void;
+  unmute(): void;
+  isEnabled(): boolean;
+}
+
+/**
+ * 音频上下文状态
+ */
+export interface AudioContextState {
+  initialized: boolean;
+  suspended: boolean;
+  context: AudioContext | null;
+}
+
+// ==================== UI交互类型扩展 ====================
+/**
+ * 棋盘渲染配置
+ */
+export interface BoardRenderConfig {
+  showCoordinates: boolean;
+  highlightLastMove: boolean;
+  showPossibleMoves: boolean;
+  theme: 'classic' | 'modern' | 'wood';
+}
+
+/**
+ * 游戏模式
+ */
+export type GameMode = 'game' | 'notation' | 'analysis';
+
+/**
+ * UI状态管理接口
+ */
+export interface IUIManager {
+  renderBoard(): void;
+  renderPieces(pieces: ChessPiece[]): void;
+  highlightSquare(position: Position): void;
+  clearHighlights(): void;
+  setGameMode(mode: GameMode): void;
+  afterMove(gameState: GameState): void;
+  clearSelection(): void;
+}
+
+// ==================== 记谱法类型 ====================
+/**
+ * 记谱法解析结果
+ */
+export interface NotationParseResult {
+  success: boolean;
+  move?: Move;
+  error?: string;
+  parsedNotation?: string;
+}
+
+/**
+ * 记谱法解析器接口
+ */
+export interface INotationParser {
+  parseMove(notation: string): NotationParseResult;
+  parseGame(notationText: string): { moves: Move[]; errors: string[] };
+  generateNotation(move: Move): string;
+  positionToNotation(position: Position): string;
+}
+
+// ==================== 错误处理类型扩展 ====================
+/**
+ * 安全错误信息（用于生产环境）
+ */
+export interface SafeErrorInfo {
+  code: string;
+  message: string;
+  timestamp: number;
+  sanitized: boolean;
+}
+
 // ==================== 工具函数类型 ====================
 
 /**
@@ -417,7 +550,7 @@ export function isValidPlayerColor(value: unknown): value is PlayerColor {
  */
 export function isValidPieceType(value: unknown): value is PieceType {
   const validTypes: PieceType[] = [
-    '帥', '将', '仕', '士', '相', '象', '马', '車', '车', '炮', '砲', '兵', '卒',
+    '帥', '将', '仕', '士', '相', '象', '马', '馬', '車', '车', '炮', '砲', '兵', '卒',
     'king', 'advisor', 'elephant', 'horse', 'rook', 'cannon', 'soldier'
   ];
   return validTypes.includes(value as PieceType);
@@ -454,7 +587,7 @@ export type {
   // 验证类型
   ValidationOptions,
   ValidationResult,
-  ValidationError,
+  ValidationErrorInterface,
   ValidationWarning,
   LayerStatistics,
 
@@ -474,6 +607,8 @@ export type {
   // 音频类型
   SoundType,
   AudioConfig,
+  IAudioManager,
+  AudioContextState,
 
   // 演示类型
   DemonstrationMode,
@@ -483,6 +618,26 @@ export type {
   // 配置类型
   BoardConfig,
   GameConfig,
+  BaseEngineOptions,
+  ValidatorConfig,
+  UIConfig,
+
+  // 性能缓存类型
+  IPerformanceCache,
+  CacheStats,
+
+  // UI交互类型
+  GameMode,
+  IUIManager,
+  BoardRenderConfig,
+
+  // 记谱法类型
+  NotationParseResult,
+  INotationParser,
+
+  // 安全类型
+  SecurityManager,
+  SafeErrorInfo,
 
   // 工具类型
   Comparator,
