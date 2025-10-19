@@ -1115,6 +1115,35 @@ button:active {
     }
 }
 
+/* 步骤高亮样式 */
+.steps-list li.completed-step {
+    background: #e8f5e8;
+    color: #2e7d32;
+    border-color: #4CAF50;
+    font-weight: 500;
+}
+
+.steps-list li.current-step {
+    background: #2196F3;
+    color: white;
+    border-color: #1976D2;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
+}
+
+.steps-list li.current-step .step-number {
+    color: white;
+}
+
+.steps-list li.current-step .step-description {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* 棋谱步骤过渡动画 */
+.steps-list li {
+    transition: all 0.3s ease;
+}
+
 /* 响应式调整 */
 @media (max-width: 600px) {
     .modal-dialog {
@@ -1131,4 +1160,147 @@ button:active {
     .modal-title {
         font-size: 1.1em;
     }
+}
+
+/* ==================== 分类导航样式优化 ==================== */
+
+/* 分类导航区域 */
+.classification-nav {
+    margin-bottom: 20px;
+}
+
+.category-selection {
+    background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(248,249,250,0.9));
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.category-selection h4 {
+    margin: 0 0 20px 0;
+    color: #2c3e50;
+    font-size: 18px;
+    font-weight: 600;
+    border-bottom: 3px solid #3498db;
+    padding-bottom: 10px;
+    text-align: center;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.category-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 5px;
+}
+
+/* 分类卡片样式 */
+.category-item {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    position: relative;
+    overflow: hidden;
+    text-align: left;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.category-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.category-item:hover::before {
+    left: 100%;
+}
+
+.category-item:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    background: linear-gradient(135deg, #764ba2, #667eea);
+}
+
+.category-item:active {
+    transform: translateY(-1px) scale(1.01);
+}
+
+.category-title {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.category-count {
+    font-size: 12px;
+    opacity: 0.9;
+    background: rgba(255,255,255,0.2);
+    padding: 2px 8px;
+    border-radius: 12px;
+    display: inline-block;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.category-description {
+    font-size: 13px;
+    opacity: 0.8;
+    line-height: 1.3;
+}
+
+/* 滚动条美化 */
+.category-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.category-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.category-list::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.category-list::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* 加载动画优化 */
+.loading-message {
+    text-align: center;
+    color: #87ceeb;
+    font-style: italic;
+    padding: 40px;
+    background: linear-gradient(135deg, rgba(0,0,0,0.05), rgba(0,0,0,0.1));
+    border-radius: 12px;
+    margin: 20px 0;
+    border: 1px solid rgba(135,206,235,0.2);
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }

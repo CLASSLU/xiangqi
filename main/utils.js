@@ -211,17 +211,6 @@ export const throttle = (func, limit) => {
 };
 
 // ==================== 安全DOM工具 ====================
-/**
- * 安全地转义HTML特殊字符，防止XSS攻击
- * @param {string} str - 要转义的字符串
- * @returns {string} 转义后的安全字符串
- */
-export const escapeHTML = (str) => {
-    if (!str || typeof str !== 'string') return '';
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-};
 
 /**
  * 安全地创建带有文本内容的DOM元素

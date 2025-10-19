@@ -133,15 +133,12 @@
     </style>
     <script src="constants.js"></script>
     <script src="utils.js"></script>
-    <script src="modal-manager.js"></script>
+    <script src="chess-validator.js"></script>
+    <script src="error-recovery.js"></script>
     <script src="audio-manager.js"></script>
-    <script src="chess-notation-parser-v2.js"></script>
-    <script src="game-state.js"></script>
-    <script src="move-validator.js"></script>
-    <script src="game-demonstration.js"></script>
-    <script src="board-renderer.js"></script>
-    <script src="ui-event-handler.js"></script>
-    <script src="error-handler.js"></script>
+    <script src="chess-notation-parser.js"></script>
+    <script src="game-state-manager.js"></script>
+    <script src="chess.js"></script>
 </head>
 <body>
     <div class="container">
@@ -344,6 +341,34 @@
                         } else {
                             console.log('❌ autoPlayFullGame方法不存在');
                             showMessage('自动演示功能暂时不可用', 'warning');
+                        }
+                    } else {
+                        console.log('❌ 游戏对象不存在');
+                        showMessage('游戏尚未初始化', 'error');
+                    }
+                });
+            }
+
+            // 暂停按钮
+            const pauseBtn = document.getElementById('pauseBtn');
+            if (pauseBtn) {
+                pauseBtn.addEventListener('click', function() {
+                    console.log('暂停棋谱演示');
+                    if (window.game) {
+                        if (window.game.pauseGame) {
+                            window.game.pauseGame();
+                            // 更新按钮状态
+                            pauseBtn.textContent = '▶ 继续';
+                            pauseBtn.onclick = function() {
+                                if (window.game.resumeGame) {
+                                    window.game.resumeGame();
+                                    pauseBtn.textContent = '⏸ 暂停';
+                                    pauseBtn.onclick = arguments.callee.caller;
+                                }
+                            };
+                        } else {
+                            console.log('❌ pauseGame方法不存在');
+                            showMessage('暂停功能暂时不可用', 'warning');
                         }
                     } else {
                         console.log('❌ 游戏对象不存在');

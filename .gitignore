@@ -54,3 +54,4 @@ Thumbs.db
 scraped-data/
 temp-games/
 .aider*
+.worktrees

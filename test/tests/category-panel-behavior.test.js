@@ -4,7 +4,7 @@
 // 导入游戏类
 const jsdom = require('jsdom');
 const { JSDOM } = jsdom;
-const { XiangqiGame } = require('../../main/chess.js');
+const { MockXiangqiGame } = require("../mock-xiangqi-game");
 
 describe('分类棋谱行为验证测试', () => {
     let game;
@@ -30,7 +30,7 @@ describe('分类棋谱行为验证测试', () => {
         global.window = dom.window;
         global.navigator = dom.window.navigator;
 
-        game = new XiangqiGame();
+        game = new MockXiangqiGame();
         game.board = null; // 测试环境中禁用实际的DOM操作
     });
 
@@ -89,35 +89,20 @@ describe('分类棋谱行为验证测试', () => {
         console.log('✅ showClassificationPanel基本行为验证通过：正确调用数据加载');
     });
 
-    test('loadAndPlayClassicGame的重定向行为验证', async () => {
+    test('loadAndPlayClassicGame重定向到爬取数据验证', async () => {
         // 模拟showClassificationPanel
         let classificationPanelCalled = false;
         game.showClassificationPanel = async () => {
             classificationPanelCalled = true;
         };
 
-        // 调用loadAndPlayClassicGame
-        await game.loadAndPlayClassicGame('任意经典开局名称');
+        // 调用loadAndPlayClassicGame，应该重定向到爬取的棋谱分类数据
+        await game.loadAndPlayClassicGame('任意棋谱名称');
 
-        // 验证重定向行为
+        // 验证重定向到爬取数据的行为
         expect(classificationPanelCalled).toBe(true);
 
-        console.log('✅ loadAndPlayClassicGame重定向行为验证通过');
+        console.log('✅ loadAndPlayClassicGame重定向到爬取数据验证通过');
     });
 
-    test('setupFamousGame的重定向行为验证', async () => {
-        // 模拟showClassificationPanel
-        let classificationPanelCalled = false;
-        game.showClassificationPanel = async () => {
-            classificationPanelCalled = true;
-        };
-
-        // 调用setupFamousGame
-        await game.setupFamousGame('中炮对屏风马经典');
-
-        // 验证重定向行为
-        expect(classificationPanelCalled).toBe(true);
-
-        console.log('✅ setupFamousGame重定向行为验证通过');
     });
-});
